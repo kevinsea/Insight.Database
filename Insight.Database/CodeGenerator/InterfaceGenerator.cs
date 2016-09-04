@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Insight.Database;
 using Insight.Database.Mapping;
+using Insight.Database.PlatformCompatibility;
 using Insight.Database.Structure;
 
 namespace Insight.Database.CodeGenerator
@@ -59,17 +60,11 @@ namespace Insight.Database.CodeGenerator
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
 		static InterfaceGenerator()
 		{
-			// make a new assembly for the generated types
-			AssemblyName an = Assembly.GetExecutingAssembly().GetName();
-
-			// TODO remove debugger condition for v6
-			if (StaticFieldStorage.DebuggerIsAttached())  // Make the dynamic assembly have a unique name.  Fixes debugger issue #224.  
-				an.Name = an.Name + ".DynamicAssembly";
-
-			AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-			
-			_moduleBuilder = ab.DefineDynamicModule(an.Name);
+			_moduleBuilder = Reflection.CreateDynamicModule();
 		}
+
+
+
 		#endregion
 
 		#region Class Implementors
@@ -144,7 +139,14 @@ namespace Insight.Database.CodeGenerator
 
 				// return the create method
 				var createMethod = t.GetMethod("Create", _ifuncDbConnectionParameterTypes);
-				return (Func<Func<IDbConnection>, object>)Delegate.CreateDelegate(typeof(Func<Func<IDbConnection>, object>), createMethod);
+
+#if NETCORE
+				var del = (Func<Func<IDbConnection>, object>)createMethod.CreateDelegate(typeof(Func<Func<IDbConnection>, object>));
+#else
+				var del = (Func<Func<IDbConnection>, object>)Delegate.CreateDelegate(typeof(Func<Func<IDbConnection>, object>), createMethod);
+#endif
+
+				return del;
 			}
 			catch (TypeLoadException e)
 			{
@@ -154,7 +156,7 @@ namespace Insight.Database.CodeGenerator
 #else
 				if (e.HResult == -2146233054)
 #endif
-					throw new InvalidOperationException(String.Format(CultureInfo.InvariantCulture, 
+					throw new InvalidOperationException(String.Format(CultureInfo.InvariantCulture,
 						"{0} is inaccessible to Insight.Database. Make sure that the interface is public, or add " +
 						"[assembly:InternalsVisibleTo(\"Insight.Database\")] and [assembly:InternalsVisibleTo(\"Insight.Database.DynamicAssembly\")] " +
 						"to your assembly (System.Runtime.CompilerServices).  If the interface is nested, then it must be public to the world, " +
@@ -234,9 +236,9 @@ namespace Insight.Database.CodeGenerator
 
 			return getConnection;
 		}
-		#endregion
+#endregion
 
-		#region Internal Members
+#region Internal Members
 		/// <summary>
 		/// Finds all of the methods on a given interface.
 		/// </summary>
@@ -368,7 +370,7 @@ namespace Insight.Database.CodeGenerator
 						if (EmitSpecialParameter(mIL, "commandBehavior", parameters, executeParameters))
 							break;
 
-							IlHelper.EmitLdInt32(mIL, (int)CommandBehavior.Default);
+						IlHelper.EmitLdInt32(mIL, (int)CommandBehavior.Default);
 						break;
 
 					case "closeConnection":
@@ -430,7 +432,7 @@ namespace Insight.Database.CodeGenerator
 			var returnType = interfaceMethod.ReturnType;
 			if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
 				returnType = returnType.GetGenericArguments()[0];
-			
+
 			// if there are returns attributes specified, then build the structure for the coder
 			var returnsAttributes = interfaceMethod.GetCustomAttributes(true).OfType<RecordsetAttribute>().ToDictionary(r => r.Index);
 
@@ -760,18 +762,18 @@ namespace Insight.Database.CodeGenerator
 				if (parameterType.IsByRef)
 					parameterType = parameterType.GetElementType();
 
-                FieldBuilder fb = tb.DefineField(p.Name, parameterType, FieldAttributes.Public);
+				FieldBuilder fb = tb.DefineField(p.Name, parameterType, FieldAttributes.Public);
 
-                // if there is a column attribute, copy it to the field
-                var columnAttribute = (ColumnAttribute)p.GetCustomAttributes(false).OfType<ColumnAttribute>().FirstOrDefault();
-                if (columnAttribute != null)
-                    fb.SetCustomAttribute(columnAttribute.GetCustomAttributeBuilder());
+				// if there is a column attribute, copy it to the field
+				var columnAttribute = (ColumnAttribute)p.GetCustomAttributes(false).OfType<ColumnAttribute>().FirstOrDefault();
+				if (columnAttribute != null)
+					fb.SetCustomAttribute(columnAttribute.GetCustomAttributeBuilder());
 
-				ctorIL.Emit(OpCodes.Ldarg_0);					// this
-				ctorIL.Emit(OpCodes.Ldarg, p.Position + 1);		// parameter (in order)
-				if (p.ParameterType.IsByRef)					// dereference the pointer if necessary
+				ctorIL.Emit(OpCodes.Ldarg_0);                   // this
+				ctorIL.Emit(OpCodes.Ldarg, p.Position + 1);     // parameter (in order)
+				if (p.ParameterType.IsByRef)                    // dereference the pointer if necessary
 					ctorIL.Emit(OpCodes.Ldobj, parameterType);
-				ctorIL.Emit(OpCodes.Stfld, fb);					// store to field
+				ctorIL.Emit(OpCodes.Stfld, fb);                 // store to field
 			}
 
 			ctorIL.Emit(OpCodes.Ret);
@@ -848,6 +850,6 @@ namespace Insight.Database.CodeGenerator
 			il.Emit(OpCodes.Ldarg, (int)interfaceParameter.Position + 1);
 			return true;
 		}
-		#endregion
+#endregion
 	}
 }

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using Insight.Database.PlatformCompatibility;
 
 namespace Insight.Database.CodeGenerator
 {
@@ -34,15 +35,7 @@ namespace Insight.Database.CodeGenerator
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
 		static StaticFieldStorage()
 		{
-			// create a shared assembly for all of the static fields to live in
-			AssemblyName an = Assembly.GetExecutingAssembly().GetName();
-
-			// TODO remove debugger condition for v6
-			if (DebuggerIsAttached())  // Make the dynamic assembly have a unique name.  Fixes debugger issue #224.  
-				an.Name = an.Name + ".DynamicAssembly";
-
-			AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-			_dynamicModule = ab.DefineDynamicModule(an.Name);
+			_dynamicModule = Reflection.CreateDynamicModule();
 		}
 
 		/// <summary>

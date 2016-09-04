@@ -50,6 +50,8 @@ namespace Insight.Database
 		{
 		}
 
+
+#if (!NETCORE)
 		/// <summary>
 		/// Initializes a new instance of the OptimisticConcurrencyException class.
 		/// </summary>
@@ -58,5 +60,7 @@ namespace Insight.Database
 		protected OptimisticConcurrencyException(SerializationInfo serializationInfo, StreamingContext context) : base(serializationInfo, context)
 		{
 		}
+#endif
+
 	}
 }

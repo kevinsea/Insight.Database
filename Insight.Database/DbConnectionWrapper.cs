@@ -155,6 +155,7 @@ namespace Insight.Database
 			get { return InnerConnection.State; }
 		}
 
+#if (!NETCORE)
 		/// <inheritdoc/>
 		public override DataTable GetSchema()
 		{
@@ -172,7 +173,7 @@ namespace Insight.Database
 		{
 			return InnerConnection.GetSchema(collectionName, restrictionValues);
 		}
-
+#endif
 		/// <inheritdoc/>
 		protected override void Dispose(bool disposing)
 		{
@@ -206,7 +207,7 @@ namespace Insight.Database
 		{
 			get
 			{
-#if !NODBASYNC && !MONO
+#if !NODBASYNC && !MONO && !NETCORE
 				// get the provider for the connection
 				var innerProviderFactory = DbProviderFactories.GetFactory(InnerConnection);
 #else

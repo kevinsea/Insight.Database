@@ -104,6 +104,7 @@ namespace Insight.Database
 			if (command == null) throw new ArgumentNullException("command");
 
 			SqlCommand sqlCommand = command as SqlCommand;
+		
 			SqlCommandBuilder.DeriveParameters(sqlCommand);
 			AdjustSqlParameters(sqlCommand);
 
@@ -125,7 +126,10 @@ namespace Insight.Database
 			SqlParameter template = (SqlParameter)parameter;
 			p.SqlDbType = template.SqlDbType;
 			p.TypeName = template.TypeName;
+
+#if !NETCORE
 			p.UdtTypeName = template.UdtTypeName;
+#endif
 
 			return p;
 		}
@@ -138,6 +142,7 @@ namespace Insight.Database
 
 			base.FixupParameter(command, parameter, dbType, type);
 
+#if !NETCORE
 			// when calling sql text, we have to fill in the udttypename for some parameters
 			if (command.CommandType != CommandType.StoredProcedure && IsSqlUserDefinedType(type))
 			{
@@ -159,6 +164,7 @@ namespace Insight.Database
 						break;
 				}
 			}
+#endif
 
 			// older versions of SQL Server (CE and 2005) don't support DateTime2
 			// newer versions do, so if we have a new version and it's a datetime, make it bigger

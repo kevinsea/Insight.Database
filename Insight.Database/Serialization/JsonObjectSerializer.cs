@@ -50,10 +50,15 @@ namespace Insight.Database
 			{
 				new DataContractJsonSerializer(type).WriteObject(stream, value);
 
-				return Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+#if NETCORE  //this could be the code for everyone, being overly cautious
+				var stream1 =Encoding.UTF8.GetString(stream.ToArray());
+#else
+				var stream2 = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+#endif
+				return stream1;
 			}
 #endif
-		}
+			}
 
 		/// <inheritdoc/>
 		public override object DeserializeObject(Type type, object encoded)
