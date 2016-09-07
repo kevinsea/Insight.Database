@@ -111,12 +111,14 @@ namespace Insight.Database
 			return length;
 		}
 
+#if !NETCORE
 		/// <inheritdoc/>
 		public override void Close()
 		{
 			if (_inner != null)
 				_inner.Close();
 		}
+#endif
 
 		/// <inheritdoc/>
 		public override IEnumerator GetEnumerator()
@@ -124,11 +126,14 @@ namespace Insight.Database
 			throw new NotImplementedException();
 		}
 
+	
+#if !NETCORE  || TESTHACK  // Bypass for testing for now
 		/// <inheritdoc/>
 		public override DataTable GetSchemaTable()
 		{
 			return _inner.GetSchemaTable();
 		}
+#endif
 
 		/// <inheritdoc/>
 		public override bool NextResult()

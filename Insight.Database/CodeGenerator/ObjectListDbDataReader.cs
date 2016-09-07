@@ -84,6 +84,8 @@ namespace Insight.Database.CodeGenerator
 		#endregion
 
 		#region Implemented Methods
+
+#if !NETCORE || TESTHACK  // Bypass for testing for now
 		/// <summary>
 		/// Returns the schema table for the data.
 		/// </summary>
@@ -92,6 +94,7 @@ namespace Insight.Database.CodeGenerator
 		{
 			return _objectReader.SchemaTable;
 		}
+#endif
 
 		/// <summary>
 		/// Read the next item from the reader.
@@ -185,9 +188,9 @@ namespace Insight.Database.CodeGenerator
 		{
 			return false;
 		}
-		#endregion
+#endregion
 
-		#region Stub Methods
+#region Stub Methods
 		public override int FieldCount
 		{
 			get { return _objectReader.SchemaTable.Rows.Count; }
@@ -203,9 +206,11 @@ namespace Insight.Database.CodeGenerator
 			return _objectReader.GetOrdinal(name);
 		}
 
+#if !NETCORE
 		public override void Close()
 		{
 		}
+#endif
 
 		public override int Depth
 		{
@@ -251,9 +256,9 @@ namespace Insight.Database.CodeGenerator
 		{
             get { return _readRowCount; }
 		}
-		#endregion
+#endregion
 
-		#region Private Methods
+#region Private Methods
 		/// <summary>
 		/// Reset the reader so that it can read the records again.
 		/// </summary>
@@ -275,6 +280,6 @@ namespace Insight.Database.CodeGenerator
 			_currentStringOrdinal = -1;
 			_currentStringValue = null;
 		}
-		#endregion
+#endregion
 	}
 }

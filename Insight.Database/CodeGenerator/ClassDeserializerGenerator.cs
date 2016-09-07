@@ -84,7 +84,7 @@ namespace Insight.Database.CodeGenerator
 				delegateType = typeof(Func<,,>).MakeGenericType(typeof(IDataReader), type, type);
 
 #if NETCORE
-			return method.CreateDelegate(delegateType);
+			return method.CreateDelegate(delegateType);   //TODO .Net Core
 #else
 			return method.CreateDelegate(delegateType);
 #endif

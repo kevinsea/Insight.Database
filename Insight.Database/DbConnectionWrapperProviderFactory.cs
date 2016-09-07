@@ -5,9 +5,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Security;
-using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
+
+#if !NETCORE
+using System.Security.Permissions;
+#endif
 
 namespace Insight.Database
 {
@@ -45,7 +48,7 @@ namespace Insight.Database
 			InnerFactory = (T)field.GetValue(null);
 		}
 
-		#region Implementation
+#region Implementation
 
 #if !NETCORE
 		/// <inheritdoc/>
@@ -109,6 +112,6 @@ namespace Insight.Database
 		}
 #endif
 
-		#endregion
+#endregion
 	}
 }

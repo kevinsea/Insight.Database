@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -23,6 +24,7 @@ namespace Insight.Database.PlatformCompatibility
 				an.Name = an.Name + ".DynamicAssembly";
 
 			AssemblyBuilder ab = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+			Debug.WriteLine("Assemby created*************************");
 
 			ModuleBuilder builder = ab.DefineDynamicModule(an.Name);
 			return builder;

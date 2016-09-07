@@ -1,0 +1,4 @@
+{
+  "projects": [ "Insight.Database", "Insight.Database.Tests", "Insight.Database.Json",  "Insight.Database.Providers.Default" ],
+    "sdk": { "version": "1.0.0.*" }
+}

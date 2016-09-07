@@ -127,7 +127,7 @@ namespace Insight.Database
 			p.SqlDbType = template.SqlDbType;
 			p.TypeName = template.TypeName;
 
-#if !NETCORE
+#if !NETCORE || TESTHACK  // Bypass for testing 'Cause where we are testing this exists
 			p.UdtTypeName = template.UdtTypeName;
 #endif
 
@@ -142,7 +142,7 @@ namespace Insight.Database
 
 			base.FixupParameter(command, parameter, dbType, type);
 
-#if !NETCORE
+#if !NETCORE || TESTHACK
 			// when calling sql text, we have to fill in the udttypename for some parameters
 			if (command.CommandType != CommandType.StoredProcedure && IsSqlUserDefinedType(type))
 			{

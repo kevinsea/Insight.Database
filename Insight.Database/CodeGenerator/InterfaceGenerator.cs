@@ -77,7 +77,7 @@ namespace Insight.Database.CodeGenerator
 		/// <returns>An implmementor of the given interface.</returns>
 		public static object GetImplementorOf(Type type, Func<IDbConnection> connectionProvider, bool singleThreaded)
 		{
-			if (!type.IsInterface && !type.IsAbstract)
+			if (!type.GetTypeInfo().IsInterface && !type.GetTypeInfo().IsAbstract)
 				throw new ArgumentException("type must be an interface or abstract class", "type");
 
 			var constructors = singleThreaded ? _singleThreadedConstructors : _constructors;
@@ -98,9 +98,9 @@ namespace Insight.Database.CodeGenerator
 		private static Func<Func<IDbConnection>, object> CreateImplementorOf(Type type, bool singleThreaded)
 		{
 			// create the type
-			string typeName = type.FullName + Guid.NewGuid().ToString();
+			string typeName = type.GetTypeInfo().FullName + Guid.NewGuid().ToString();
 			TypeBuilder tb;
-			if (type.IsInterface)
+			if (type.GetTypeInfo().IsInterface)
 			{
 				if (singleThreaded)
 					tb = _moduleBuilder.DefineType(typeName, TypeAttributes.Class, typeof(DbConnectionWrapper), new Type[] { type });
@@ -135,14 +135,18 @@ namespace Insight.Database.CodeGenerator
 			// create the type
 			try
 			{
-				Type t = tb.CreateType();
-
-				// return the create method
-				var createMethod = t.GetMethod("Create", _ifuncDbConnectionParameterTypes);
 
 #if NETCORE
+				TypeInfo newClassTypeInfo = tb.CreateTypeInfo();
+				// return the create method
+				var createMethod = newClassTypeInfo.GetMethod("Create", _ifuncDbConnectionParameterTypes);
+
 				var del = (Func<Func<IDbConnection>, object>)createMethod.CreateDelegate(typeof(Func<Func<IDbConnection>, object>));
+
 #else
+				Type newClassType = tb.CreateType();
+				// return the create method
+				var createMethod = newClassType.GetTypeInfo().GetMethod("Create", _ifuncDbConnectionParameterTypes);  //messy one, review
 				var del = (Func<Func<IDbConnection>, object>)Delegate.CreateDelegate(typeof(Func<Func<IDbConnection>, object>), createMethod);
 #endif
 

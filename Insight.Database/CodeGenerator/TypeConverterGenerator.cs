@@ -12,8 +12,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+//using Xml = System.Xml; // Aliasing is need for core due to conflicts
+//using XmlLinq = System.Xml.Linq;  // Aliasing is need for core due to conflicts
 using Insight.Database.Mapping;
 using Insight.Database.Providers;
+using Insight.Database.PlatformCompatibility;
 
 namespace Insight.Database.CodeGenerator
 {
@@ -25,13 +28,13 @@ namespace Insight.Database.CodeGenerator
 	static class TypeConverterGenerator
 	{
 		#region Private Members
-		internal static readonly MethodInfo CreateDataExceptionMethod = typeof(TypeConverterGenerator).GetMethod("CreateDataException");
-		internal static readonly MethodInfo IsAllDbNullMethod = typeof(TypeConverterGenerator).GetMethod("IsAllDbNull");
-		private static readonly MethodInfo _enumParse = typeof(Enum).GetMethod("Parse", new Type[] { typeof(Type), typeof(string), typeof(bool) });
-		private static readonly MethodInfo _readChar = typeof(TypeConverterGenerator).GetMethod("ReadChar");
-		private static readonly MethodInfo _readNullableChar = typeof(TypeConverterGenerator).GetMethod("ReadNullableChar");
-		private static readonly MethodInfo _readXmlDocument = typeof(TypeConverterGenerator).GetMethod("ReadXmlDocument");
-		private static readonly MethodInfo _readXDocument = typeof(TypeConverterGenerator).GetMethod("ReadXDocument");
+		internal static readonly MethodInfo CreateDataExceptionMethod = typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("CreateDataException");
+		internal static readonly MethodInfo IsAllDbNullMethod = typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("IsAllDbNull");
+		private static readonly MethodInfo _enumParse = typeof(Enum).GetTypeInfo().GetMethod("Parse", new Type[] { typeof(Type), typeof(string), typeof(bool) });
+		private static readonly MethodInfo _readChar = typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("ReadChar");
+		private static readonly MethodInfo _readNullableChar = typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("ReadNullableChar");
+		private static readonly MethodInfo _readXmlDocument = typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("ReadXmlDocument");
+		private static readonly MethodInfo _readXDocument = typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("ReadXDocument");
 
 		/// <summary>
 		/// The number of ticks to offset when converting between .NET TimeSpan and SQL DateTime.
@@ -54,144 +57,144 @@ namespace Insight.Database.CodeGenerator
 		/// </remarks>
 		public static void EmitConvertAndSetValue(ILGenerator il, Type sourceType, FieldMapping mapping)
 		{
-            EmitConvertValue(il, mapping.Member.Name, sourceType, mapping.Member.MemberType, mapping.Serializer);
+			EmitConvertValue(il, mapping.Member.Name, sourceType, mapping.Member.MemberType, mapping.Serializer);
 			mapping.Member.EmitSetValue(il);
 		}
 
-        /// <summary>
-        /// Emits the IL to convert a value to a target type.
-        /// </summary>
-        /// <param name="il">The IL generator to output to.</param>
-        /// <param name="memberName">The name of the member being converted.</param>
-        /// <param name="sourceType">The source type.</param>
-        /// <param name="targetType">The target type.</param>
-        /// <param name="serializer">The serializer to use to deserialize the value.</param>
-        public static void EmitConvertValue(ILGenerator il, string memberName, Type sourceType, Type targetType, IDbObjectSerializer serializer)
-        {
-            // targetType - the target type we need to convert to
-            // underlyingTargetType - if the target type is nullable, we need to look at the underlying target type
-            // rawTargetType - if the underlying target type is enum, we need to look at the underlying target type for that
-            // sourceType - this is the type of the data in the data set
-            Type underlyingTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+		/// <summary>
+		/// Emits the IL to convert a value to a target type.
+		/// </summary>
+		/// <param name="il">The IL generator to output to.</param>
+		/// <param name="memberName">The name of the member being converted.</param>
+		/// <param name="sourceType">The source type.</param>
+		/// <param name="targetType">The target type.</param>
+		/// <param name="serializer">The serializer to use to deserialize the value.</param>
+		public static void EmitConvertValue(ILGenerator il, string memberName, Type sourceType, Type targetType, IDbObjectSerializer serializer)
+		{
+			// targetType - the target type we need to convert to
+			// underlyingTargetType - if the target type is nullable, we need to look at the underlying target type
+			// rawTargetType - if the underlying target type is enum, we need to look at the underlying target type for that
+			// sourceType - this is the type of the data in the data set
+			Type underlyingTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
-            // some labels that we need
-            var finishLabel = il.DefineLabel();
-            Label isDbNullLabel = il.DefineLabel();
+			// some labels that we need
+			var finishLabel = il.DefineLabel();
+			Label isDbNullLabel = il.DefineLabel();
 
-            // if the value is DbNull, then we continue to the next item
-            il.Emit(OpCodes.Dup);								// dup value, stack => [target][value][value]
-            il.Emit(OpCodes.Isinst, typeof(DBNull));			// isinst DBNull:value, stack => [target][value-as-object][DBNull or null]
-            il.Emit(OpCodes.Brtrue_S, isDbNullLabel);			// br.true isDBNull, stack => [target][value-as-object]
+			// if the value is DbNull, then we continue to the next item
+			il.Emit(OpCodes.Dup);                               // dup value, stack => [target][value][value]
+			il.Emit(OpCodes.Isinst, typeof(DBNull));            // isinst DBNull:value, stack => [target][value-as-object][DBNull or null]
+			il.Emit(OpCodes.Brtrue_S, isDbNullLabel);           // br.true isDBNull, stack => [target][value-as-object]
 
-            // handle the special target types first
-            if (targetType == typeof(char))
-            {
-                // char
-                il.EmitCall(OpCodes.Call, _readChar, null);
-            }
-            else if (targetType == typeof(char?))
-            {
-                // char?
-                il.EmitCall(OpCodes.Call, _readNullableChar, null);
-            }
-            else if (targetType == TypeHelper.LinqBinaryType)
-            {
-                // unbox sql byte arrays to Linq.Binary
+			// handle the special target types first
+			if (targetType == typeof(char))
+			{
+				// char
+				il.EmitCall(OpCodes.Call, _readChar, null);
+			}
+			else if (targetType == typeof(char?))
+			{
+				// char?
+				il.EmitCall(OpCodes.Call, _readNullableChar, null);
+			}
+			else if (targetType == TypeHelper.LinqBinaryType)
+			{
+				// unbox sql byte arrays to Linq.Binary
 
-                // before: stack => [target][object-value]
-                // after: stack => [target][byte-array-value]
-                il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [target][byte-array]
-                // before: stack => [target][byte-array-value]
-                // after: stack => [target][Linq.Binary-value]
-                il.Emit(OpCodes.Newobj, TypeHelper.LinqBinaryCtor);
-            }
-            else if (targetType == typeof(XmlDocument))
-            {
-                // special handler for XmlDocuments
+				// before: stack => [target][object-value]
+				// after: stack => [target][byte-array-value]
+				il.Emit(OpCodes.Unbox_Any, typeof(byte[])); // stack is now [target][byte-array]
+															// before: stack => [target][byte-array-value]
+															// after: stack => [target][Linq.Binary-value]
+				il.Emit(OpCodes.Newobj, TypeHelper.LinqBinaryCtor);
+			}
+			else if (targetType == typeof(XmlDocument))
+			{
+				// special handler for XmlDocuments
 
-                // before: stack => [target][object-value]
-                il.Emit(OpCodes.Call, _readXmlDocument);
+				// before: stack => [target][object-value]
+				il.Emit(OpCodes.Call, _readXmlDocument);
 
-                // after: stack => [target][xmlDocument]
-            }
-            else if (targetType == typeof(XDocument))
-            {
-                // special handler for XDocuments
+				// after: stack => [target][xmlDocument]
+			}
+			else if (targetType == typeof(XDocument))
+			{
+				// special handler for XDocuments
 
-                // before: stack => [target][object-value]
-                il.Emit(OpCodes.Call, _readXDocument);
+				// before: stack => [target][object-value]
+				il.Emit(OpCodes.Call, _readXDocument);
 
-                // after: stack => [target][xDocument]
-            }
-            else if (serializer != null && serializer.CanDeserialize(sourceType, targetType))
-            {
-                // we are getting a string from the database, but the target is not a string, and it's a reference type
-                // assume the column is a serialized data type and that we want to deserialize it
-                il.EmitLoadType(targetType);
-                StaticFieldStorage.EmitLoad(il, serializer);
-                il.Emit(OpCodes.Call, typeof(TypeConverterGenerator).GetMethod("DeserializeObject", BindingFlags.NonPublic | BindingFlags.Static));
-                il.Emit(OpCodes.Unbox_Any, targetType);
-            }
-            else if (underlyingTargetType.IsEnum && sourceType == typeof(string))
-            {
-                var localString = il.DeclareLocal(typeof(string));
+				// after: stack => [target][xDocument]
+			}
+			else if (serializer != null && serializer.CanDeserialize(sourceType, targetType))
+			{
+				// we are getting a string from the database, but the target is not a string, and it's a reference type
+				// assume the column is a serialized data type and that we want to deserialize it
+				il.EmitLoadType(targetType);
+				StaticFieldStorage.EmitLoad(il, serializer);
+				il.Emit(OpCodes.Call, typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("DeserializeObject", BindingFlags.NonPublic | BindingFlags.Static));
+				il.Emit(OpCodes.Unbox_Any, targetType);
+			}
+			else if (underlyingTargetType.GetTypeInfo().IsEnum && sourceType == typeof(string))
+			{
+				var localString = il.DeclareLocal(typeof(string));
 
-                // if we are converting a string to an enum, then parse it.
-                // see if the value from the database is a string. if so, we need to parse it. If not, we will just try to unbox it.
-                il.Emit(OpCodes.Isinst, typeof(string));			// is string, stack => [target][string]
-                il.Emit(OpCodes.Stloc, localString);				// pop loc.2 (enum), stack => [target]
+				// if we are converting a string to an enum, then parse it.
+				// see if the value from the database is a string. if so, we need to parse it. If not, we will just try to unbox it.
+				il.Emit(OpCodes.Isinst, typeof(string));            // is string, stack => [target][string]
+				il.Emit(OpCodes.Stloc, localString);                // pop loc.2 (enum), stack => [target]
 
-                // call enum.parse (type, value, true)
-                il.EmitLoadType(underlyingTargetType);
-                il.Emit(OpCodes.Ldloc, localString);				// push enum, stack => [target][enum-type][string]
-                il.Emit(OpCodes.Ldc_I4_1);							// push true, stack => [target][enum-type][string][true]
-                il.EmitCall(OpCodes.Call, _enumParse, null);		// call Enum.Parse, stack => [target][enum-as-object]
+				// call enum.parse (type, value, true)
+				il.EmitLoadType(underlyingTargetType);
+				il.Emit(OpCodes.Ldloc, localString);                // push enum, stack => [target][enum-type][string]
+				il.Emit(OpCodes.Ldc_I4_1);                          // push true, stack => [target][enum-type][string][true]
+				il.EmitCall(OpCodes.Call, _enumParse, null);        // call Enum.Parse, stack => [target][enum-as-object]
 
-                // Enum.Parse returns an object, which we need to unbox to the enum value
-                il.Emit(OpCodes.Unbox_Any, underlyingTargetType);
-            }
-            else if (EmitConstructorConversion(il, sourceType, targetType))
-            {
-                // target type can be constructed from source type
-            }
-            else
-            {
-                // this isn't a system value type, so unbox to the type the reader is giving us (this is a system type, hopefully)
-                // now we have an unboxed sourceType
-                il.Emit(OpCodes.Unbox_Any, sourceType);
+				// Enum.Parse returns an object, which we need to unbox to the enum value
+				il.Emit(OpCodes.Unbox_Any, underlyingTargetType);
+			}
+			else if (EmitConstructorConversion(il, sourceType, targetType))
+			{
+				// target type can be constructed from source type
+			}
+			else
+			{
+				// this isn't a system value type, so unbox to the type the reader is giving us (this is a system type, hopefully)
+				// now we have an unboxed sourceType
+				il.Emit(OpCodes.Unbox_Any, sourceType);
 
-                if (sourceType != targetType)
-                {
-                    // attempt to convert the value to the target type
-                    if (!EmitConversionOrCoersion(il, sourceType, targetType))
-                    {
-                        if (sourceType != targetType)
-                        {
-                            throw new InvalidOperationException(String.Format(
-                                CultureInfo.InvariantCulture,
-                                "Field {0} cannot be converted from {1} to {2}. Create a conversion constructor or conversion operator.",
-                                memberName,
-                                sourceType.AssemblyQualifiedName,
-                                targetType.AssemblyQualifiedName));
-                        }
-                    }
+				if (sourceType != targetType)
+				{
+					// attempt to convert the value to the target type
+					if (!EmitConversionOrCoersion(il, sourceType, targetType))
+					{
+						if (sourceType != targetType)
+						{
+							throw new InvalidOperationException(String.Format(
+								CultureInfo.InvariantCulture,
+								"Field {0} cannot be converted from {1} to {2}. Create a conversion constructor or conversion operator.",
+								memberName,
+								sourceType.GetTypeInfo().AssemblyQualifiedName,
+								targetType.GetTypeInfo().AssemblyQualifiedName));
+						}
+					}
 
-                    // if the target is nullable, then construct the nullable from the data
-                    if (Nullable.GetUnderlyingType(targetType) != null)
-                        il.Emit(OpCodes.Newobj, targetType.GetConstructor(new[] { underlyingTargetType }));
-                }
-            }
+					// if the target is nullable, then construct the nullable from the data
+					if (Nullable.GetUnderlyingType(targetType) != null)
+						il.Emit(OpCodes.Newobj, targetType.GetTypeInfo().GetConstructor(new[] { underlyingTargetType }));
+				}
+			}
 
-            /////////////////////////////////////////////////////////////////////
-            // convert DBNull to default of the given type
-            il.Emit(OpCodes.Br_S, finishLabel);
-            il.MarkLabel(isDbNullLabel);
-            il.Emit(OpCodes.Pop);
-            TypeHelper.EmitDefaultValue(il, targetType);
+			/////////////////////////////////////////////////////////////////////
+			// convert DBNull to default of the given type
+			il.Emit(OpCodes.Br_S, finishLabel);
+			il.MarkLabel(isDbNullLabel);
+			il.Emit(OpCodes.Pop);
+			TypeHelper.EmitDefaultValue(il, targetType);
 
-            il.MarkLabel(finishLabel);
-        }
-        #endregion
+			il.MarkLabel(finishLabel);
+		}
+		#endregion
 
 		#region Helper Methods
 		/// <summary>
@@ -215,7 +218,12 @@ namespace Insight.Database.CodeGenerator
 					value = value.ToString() + " - " + Type.GetTypeCode(value.GetType());
 			}
 
+#if !NETCORE
 			return new DataException(string.Format(CultureInfo.InvariantCulture, "Error parsing column {0} ({1}={2})", index, name, value), ex);
+#else
+			//TODO NETCORE does not have DataException
+			return new Exception(string.Format(CultureInfo.InvariantCulture, "Error parsing column {0} ({1}={2})", index, name, value), ex);
+#endif
 		}
 
 		/// <summary>
@@ -250,7 +258,7 @@ namespace Insight.Database.CodeGenerator
 
 			return s[0];
 		}
-
+		
 		/// <summary>
 		/// Reads an XmlDocument from a column.
 		/// </summary>
@@ -260,6 +268,7 @@ namespace Insight.Database.CodeGenerator
 		{
 			XmlDocument doc = new XmlDocument();
 			doc.LoadXml(value.ToString());
+			
 			return doc;
 		}
 
@@ -398,7 +407,7 @@ namespace Insight.Database.CodeGenerator
 				return true;
 
 			Type underlyingTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-			Type rawTargetType = underlyingTargetType.IsEnum ? Enum.GetUnderlyingType(underlyingTargetType) : underlyingTargetType;
+			Type rawTargetType = underlyingTargetType.GetTypeInfo().IsEnum ? Enum.GetUnderlyingType(underlyingTargetType) : underlyingTargetType;
 
 			return TypeConverterGenerator.EmitCoersion(il, sourceType, rawTargetType);
 		}
@@ -415,7 +424,19 @@ namespace Insight.Database.CodeGenerator
 			if (sourceType == targetType)
 				return false;
 
-			ConstructorInfo ci = targetType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { sourceType }, null);
+			ConstructorInfo ci;
+
+//#if !NETCORE
+			ci = targetType.GetTypeInfo().GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { sourceType }, null);
+//#else
+			//ConstructorInfo[] ciList = targetType.GetTypeInfo().GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+			//if (ciList == null) return false;
+
+
+			//  null, new Type[] { sourceType }, null);
+//#endif
+
 			if (ci == null)
 				return false;
 
@@ -448,7 +469,7 @@ namespace Insight.Database.CodeGenerator
 			// support converting any value to type of object
 			if (targetType == typeof(object))
 			{
-				if (sourceType.IsValueType)
+				if (sourceType.GetTypeInfo().IsValueType)
 					il.Emit(OpCodes.Box, sourceType);
 				return true;
 			}
@@ -485,12 +506,12 @@ namespace Insight.Database.CodeGenerator
 			// if the target type is an enum or nullable, try converting to one of those
 			if (Nullable.GetUnderlyingType(targetType) != null)
 				return FindConversionMethod(sourceType, Nullable.GetUnderlyingType(targetType));
-			if (targetType.IsEnum)
+			if (targetType.GetTypeInfo().IsEnum)
 				return FindConversionMethod(sourceType, Enum.GetUnderlyingType(targetType));
 
 			// handle converting sql datetime to timespan
 			if (sourceType == typeof(DateTime) && targetType == typeof(TimeSpan))
-				return typeof(TypeConverterGenerator).GetMethod("SqlDateTimeToTimeSpan");
+				return typeof(TypeConverterGenerator).GetTypeInfo().GetMethod("SqlDateTimeToTimeSpan");
 
 			return null;
 		}
@@ -505,7 +526,7 @@ namespace Insight.Database.CodeGenerator
 		/// <returns>A conversion method or null if none could be found.</returns>
 		private static MethodInfo FindConversionMethod(string methodName, Type searchType, Type sourceType, Type targetType)
 		{
-			var members = searchType.FindMembers(
+			var members = searchType.GetTypeInfo().FindMembers(
 				MemberTypes.Method,
 				BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
 				new MemberFilter(
@@ -552,8 +573,8 @@ namespace Insight.Database.CodeGenerator
 				return true;
 			}
 
-			if (!sourceType.IsPrimitive) return false;
-			if (!targetType.IsPrimitive) return false;
+			if (!sourceType.GetTypeInfo().IsPrimitive) return false;
+			if (!targetType.GetTypeInfo().IsPrimitive) return false;
 
 			// if the enum is based on a different type of integer than returned, then do the conversion
 			if (targetType == typeof(Int32) && sourceType != typeof(Int32)) il.Emit(OpCodes.Conv_I4);

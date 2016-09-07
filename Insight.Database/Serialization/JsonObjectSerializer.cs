@@ -51,11 +51,11 @@ namespace Insight.Database
 				new DataContractJsonSerializer(type).WriteObject(stream, value);
 
 #if NETCORE  //this could be the code for everyone, being overly cautious
-				var stream1 =Encoding.UTF8.GetString(stream.ToArray());
+				string streamStr =Encoding.UTF8.GetString(stream.ToArray());
 #else
-				var stream2 = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+				string streamStr = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
 #endif
-				return stream1;
+				return streamStr;
 			}
 #endif
 			}

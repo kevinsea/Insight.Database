@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
+using System.Reflection;
 
 namespace Insight.Database
 {
@@ -55,9 +56,9 @@ namespace Insight.Database
         {
             var properties = new[]
                 { 
-                    typeof(ColumnAttribute).GetProperty("ColumnName"),
-                    typeof(ColumnAttribute).GetProperty("SerializationMode"),
-                    typeof(ColumnAttribute).GetProperty("Serializer")
+                    typeof(ColumnAttribute).GetTypeInfo().GetProperty("ColumnName"),
+                    typeof(ColumnAttribute).GetTypeInfo().GetProperty("SerializationMode"),
+                    typeof(ColumnAttribute).GetTypeInfo().GetProperty("Serializer")
                 };
 
             var values = new object[]

@@ -25,7 +25,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NETCORE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETCORE;NETCORE2;TESTHACK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -84,6 +84,7 @@
     </Compile>
     <Compile Include="PlatformCompatibility\Application.cs" />
     <Compile Include="PlatformCompatibility\Reflection.cs" />
+    <Compile Include="PlatformCompatibility\TypeExtensions.cs" />
     <Compile Include="Serialization\BooleanSerializer.cs" />
     <Compile Include="SqlConstructorAttribute.cs" />
     <Compile Include="DbDataReaderWrapper.cs" />
@@ -291,7 +292,9 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>OneToOne.generated.cs</LastGenOutput>
     </None>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Structure\Query.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Query.generated.cs</LastGenOutput>
@@ -304,7 +307,9 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Results.generated.cs</LastGenOutput>
     </None>
-    <None Include="Settings.StyleCop" />
+    <None Include="Settings.StyleCop">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Structure\ResultsReader.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ResultsReader.generated.cs</LastGenOutput>
