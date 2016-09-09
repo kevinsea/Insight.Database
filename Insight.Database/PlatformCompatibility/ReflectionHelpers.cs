@@ -7,7 +7,7 @@ using Insight.Database.CodeGenerator;
 
 namespace Insight.Database.PlatformCompatibility
 {
-	internal class Reflection
+	internal class ReflectionHelpers
 	{
 		internal static ModuleBuilder CreateDynamicModule()
 		{

@@ -60,7 +60,7 @@ namespace Insight.Database.CodeGenerator
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
 		static InterfaceGenerator()
 		{
-			_moduleBuilder = Reflection.CreateDynamicModule();
+			_moduleBuilder = ReflectionHelpers.CreateDynamicModule();
 		}
 
 

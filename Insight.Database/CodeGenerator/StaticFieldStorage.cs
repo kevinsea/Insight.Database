@@ -35,7 +35,7 @@ namespace Insight.Database.CodeGenerator
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
 		static StaticFieldStorage()
 		{
-			_dynamicModule = Reflection.CreateDynamicModule();
+			_dynamicModule = ReflectionHelpers.CreateDynamicModule();
 		}
 
 		/// <summary>

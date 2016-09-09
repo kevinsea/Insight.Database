@@ -401,7 +401,7 @@ namespace Insight.Database.Providers
 			RegisterProvider(providerMap, new DbConnectionWrapperInsightDbProvider());
 
 			// look for any provider assemblies in the search path and load them automatically
-			var paths = PlatformCompatibility.Application.GetSearchPaths();
+			var paths = PlatformCompatibility.ApplicationHelpers.GetSearchPaths();
 
 			foreach (string assemblyFile in paths.Distinct()
 				.SelectMany(path => Directory.GetFiles(path, "Insight.Database.Providers.*.dll").Distinct()))

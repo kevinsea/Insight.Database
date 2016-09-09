@@ -9,7 +9,7 @@ using Insight.Database.CodeGenerator;
 
 namespace Insight.Database.PlatformCompatibility
 {
-	class Application
+	class ApplicationHelpers
 	{
 
 		internal static List<string> GetSearchPaths()
