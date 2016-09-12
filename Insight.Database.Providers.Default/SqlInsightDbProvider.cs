@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Insight.Database.CodeGenerator;
 using Insight.Database.Providers;
+using Insight.Database.Providers.Default.PlatformCompatibility;
 
 namespace Insight.Database
 {
@@ -104,8 +105,12 @@ namespace Insight.Database
 			if (command == null) throw new ArgumentNullException("command");
 
 			SqlCommand sqlCommand = command as SqlCommand;
-		
+
+#if NETCORE
+			SqlParameterHelper.DeriveParameters(sqlCommand);
+#else
 			SqlCommandBuilder.DeriveParameters(sqlCommand);
+#endif
 			AdjustSqlParameters(sqlCommand);
 
 			// remove the @ from any parameters
@@ -127,7 +132,7 @@ namespace Insight.Database
 			p.SqlDbType = template.SqlDbType;
 			p.TypeName = template.TypeName;
 
-#if !NETCORE || TESTHACK  // Bypass for testing 'Cause where we are testing this exists
+#if !NETCORE || TESTHACK  // TODO remove TESTHACK.  Temp bypass for testing since its on dektop today
 			p.UdtTypeName = template.UdtTypeName;
 #endif
 
@@ -374,6 +379,7 @@ namespace Insight.Database
 					p.TypeName = String.Format(CultureInfo.InvariantCulture, "[{0}].[{1}]", typeParameter["SchemaName"], typeParameter["TypeName"]);
 			}
 
+#if !NETCORE || TESTHACK  /// TODO remove TESTHACK.  Temp bypass for testing since its on dektop today
 			// in SQL2008, some UDTs will not have the proper type names, so we set them with good data
 			foreach (var p in parameters.Where(p => p.SqlDbType == SqlDbType.Udt))
 			{
@@ -381,6 +387,8 @@ namespace Insight.Database
 				if (typeParameter != null)
 					p.UdtTypeName = String.Format(CultureInfo.InvariantCulture, "[{0}].[{1}]", typeParameter["SchemaName"], typeParameter["TypeName"]);
 			}
+#endif
+
 		}
 
 		/// <summary>
@@ -494,7 +502,7 @@ namespace Insight.Database
 			}
 		}
 
-		#region Bulk Copy Support
+#region Bulk Copy Support
 		[SuppressMessage("Microsoft.StyleCop.CSharp.DocumentationRules", "SA1600:ElementsMustBeDocumented", Justification = "This class is an implementation wrapper.")]
 		class SqlInsightBulkCopy : InsightBulkCopy, IDisposable
 		{
@@ -578,6 +586,6 @@ namespace Insight.Database
 				}
 			}
 		}
-		#endregion
+#endregion
 	}
 }

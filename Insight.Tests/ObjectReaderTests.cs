@@ -319,6 +319,8 @@ namespace Insight.Tests
 		#endregion
 
 		#region Table Schema Tests
+
+
 		[Test]
 		public void TestTablesInSchemasWithDots()
 		{
@@ -328,7 +330,11 @@ namespace Insight.Tests
 				Connection().ExecuteSql("CREATE TYPE [vk.common].TableOfInt AS TABLE (id int)");
 				Connection().ExecuteSql("CREATE PROC [vk.common].MyProc (@table [vk.common].TableOfInt READONLY) AS SELECT 1");
 
-				Connection().Execute("[vk.common].MyProc", new { table = Enumerable.Range(1, 10) });
+				Connection().Execute("[vk.common].MyProc", new {table = Enumerable.Range(1, 10)});
+			}
+			catch (Exception ex)
+			{
+				throw;
 			}
 			finally
 			{

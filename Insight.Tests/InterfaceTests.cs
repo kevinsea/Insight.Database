@@ -16,7 +16,8 @@ using Insight.Database.Reliable;
 [assembly: InternalsVisibleTo("Insight.Database")]
 
 // TODO: uncomment this InternalsVisibleTo in v6:
-// To _debug_ some unit test you will need to enable this[assembly: InternalsVisibleTo("Insight.Database.DynamicAssembly")]
+// To _debug_ some unit test you will need to enable this
+[assembly: InternalsVisibleTo("Insight.Database.DynamicAssembly")]
 // it should remain commented out in v5 to ensure we preserve Insight's ability to access non-public strcutures
 
 namespace Insight.Tests

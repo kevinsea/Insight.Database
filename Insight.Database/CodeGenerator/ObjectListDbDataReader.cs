@@ -85,7 +85,7 @@ namespace Insight.Database.CodeGenerator
 
 		#region Implemented Methods
 
-#if !NETCORE || TESTHACK  // Bypass for testing for now
+#if !NETCORE || TESTHACK  // TODO remove TESTHACK.  Temp bypass for testing since its on dektop today
 		/// <summary>
 		/// Returns the schema table for the data.
 		/// </summary>

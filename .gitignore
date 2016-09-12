@@ -17,3 +17,5 @@ _ReSharper*/
 *.[Rr]e[Ss]harper
 
 .vagrant
+Insight.Database.Providers.Default/project.lock.json
+Insight.Database/project.lock.json
