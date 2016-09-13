@@ -12,7 +12,7 @@ namespace Insight.Database.PlatformCompatibility
 		internal static ModuleBuilder CreateDynamicModule()
 		{
 			// make a new assembly for the generated types
-#if !NETCORE
+#if NETCORE && !TESTHACK
 			AssemblyName an = typeof(Reflection).GetTypeInfo().Assembly.GetName();
 #else
 			AssemblyName an = Assembly.GetExecutingAssembly().GetName();
