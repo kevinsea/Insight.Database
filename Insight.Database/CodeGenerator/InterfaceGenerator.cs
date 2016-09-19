@@ -190,8 +190,8 @@ namespace Insight.Database.CodeGenerator
 			var baseConstructorParameters = singleThreaded ? _idbConnectionParameterTypes : _ifuncDbConnectionParameterTypes;
 
 #if NETCORE
-			var baseConstructor = TypeExtensionsCore.GetInstanceConstructor(tb.BaseType, baseConstructorParameters) ??
-								  TypeExtensionsCore.GetInstanceConstructor(tb.BaseType, Type.EmptyTypes);
+			var baseConstructor = ReflectionHelpers.GetInstanceConstructor(tb.BaseType, baseConstructorParameters) ??
+								  ReflectionHelpers.GetInstanceConstructor(tb.BaseType, Type.EmptyTypes);
 
 #else
 			BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;

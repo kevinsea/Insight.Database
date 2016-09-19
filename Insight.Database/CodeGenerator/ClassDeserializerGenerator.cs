@@ -332,7 +332,7 @@ namespace Insight.Database.CodeGenerator
 			{
 
 #if NETCORE
-				constructor = TypeExtensionsCore.GetInstanceConstructor(type, Type.EmptyTypes);
+				constructor = ReflectionHelpers.GetInstanceConstructor(type, Type.EmptyTypes);
 #else
 				BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 				constructor = type.GetConstructor(bindingFlags, null, Type.EmptyTypes, null);

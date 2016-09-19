@@ -27,7 +27,7 @@ namespace Insight.Database.CodeGenerator
 		/// The default constructor for type T.
 		/// </summary>
 #if NETCORE
-		private static ConstructorInfo _constructor =TypeExtensionsCore.GetInstanceConstructor(typeof(FastExpando), Type.EmptyTypes);
+		private static ConstructorInfo _constructor = ReflectionHelpers.GetInstanceConstructor(typeof(FastExpando), Type.EmptyTypes);
 #else
 		private static BindingFlags _anyInstancebindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 		private static ConstructorInfo _constructor = typeof(FastExpando).GetConstructor(_anyInstancebindingFlags, null, Type.EmptyTypes, null);
@@ -37,7 +37,7 @@ namespace Insight.Database.CodeGenerator
 		/// The FastExpando.SetValue method.
 		/// </summary>
 #if NETCORE
-		private static MethodInfo _fastExpandoSetValue = TypeExtensionsCore.GetInstanceMethod(typeof(FastExpando),"SetValue"
+		private static MethodInfo _fastExpandoSetValue = ReflectionHelpers.GetInstanceMethod(typeof(FastExpando),"SetValue"
 																						, new Type[] { typeof(string), typeof(object) });
 #else
 		private static MethodInfo _fastExpandoSetValue = typeof(FastExpando).GetMethod("SetValue", _anyInstancebindingFlags

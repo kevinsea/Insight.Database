@@ -423,8 +423,8 @@ namespace Insight.Database.CodeGenerator
 			if (sourceType == targetType)
 				return false;
 
-#if NETCORE// 
-			ConstructorInfo ci = TypeExtensionsCore.GetInstanceConstructor(targetType, new Type[] { sourceType });
+#if NETCORE
+			ConstructorInfo ci = ReflectionHelpers.GetInstanceConstructor(targetType, new Type[] { sourceType });
 #else
 			BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 			ConstructorInfo ci = targetType.GetConstructor(bindingFlags, null, new Type[] { sourceType }, null);
