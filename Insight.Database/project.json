@@ -1,17 +1,15 @@
 {
 	"version": "1.0.0-*",
 	"buildOptions": {
-		"debugType": "portable",
 		"emitEntryPoint": false
 	},
 	"frameworks": {
 		"netcoreapp1.0": {
 			"dependencies": {
 				"Microsoft.NETCore.App": {
-					"type": "default",
+					"type": "platform",
 					"version": "1.0.1"
 				},
-				"System.Data.Common": "4.1.0",
 				"System.Data.SqlClient": "4.1.0",
 				"System.Reflection": "4.1.0",
 				"System.Reflection.Emit": "4.0.1",
@@ -42,7 +40,6 @@
 				"define": [ "NETCORE", "COREONDESK", "COREGAPFILL" ]
 			}
 		}
-	},
-	"runtimes": { "win": {} }
+	}
 
 }
