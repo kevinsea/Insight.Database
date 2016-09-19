@@ -111,12 +111,14 @@ namespace Insight.Database
 			return length;
 		}
 
+#if !NETCORE || COREONDESK  // Bypass for core tests on desktop (Compiling Core on Desktop)
 		/// <inheritdoc/>
 		public override void Close()
 		{
 			if (_inner != null)
 				_inner.Close();
 		}
+#endif
 
 		/// <inheritdoc/>
 		public override IEnumerator GetEnumerator()
@@ -124,11 +126,15 @@ namespace Insight.Database
 			throw new NotImplementedException();
 		}
 
+
+#if !NETCORE || COREGAPFILL  // Bypass for core tests on desktop (missing core functions)
 		/// <inheritdoc/>
 		public override DataTable GetSchemaTable()
 		{
 			return _inner.GetSchemaTable();
 		}
+
+#endif
 
 		/// <inheritdoc/>
 		public override bool NextResult()

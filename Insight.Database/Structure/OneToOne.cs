@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Insight.Database.CodeGenerator;
 using Insight.Database.Mapping;
 using Insight.Database.Structure;
+using Insight.Database.PlatformCompatibility;
 
 namespace Insight.Database
 {
@@ -45,7 +46,7 @@ namespace Insight.Database
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
 		static OneToOne()
 		{
-			var recordset = typeof(T).GetCustomAttributes(true).OfType<RecordsetAttribute>().SingleOrDefault();
+			var recordset = typeof(T).GetTypeInfo().GetCustomAttributes(true).OfType<RecordsetAttribute>().SingleOrDefault();
 			if (recordset != null)
 				_objectTypes = recordset.Types.ToArray();
 			else

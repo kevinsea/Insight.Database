@@ -77,7 +77,11 @@ namespace Insight.Database
 			StringReader reader = new StringReader((string)encoded);
 			try
 			{
+#if NETCORE
+				using (XmlReader xr = XmlReader.Create(reader))
+#else
 				using (XmlTextReader xr = new XmlTextReader(reader))
+#endif
 				{
 					reader = null;
 					return serializer.ReadObject(xr);

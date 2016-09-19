@@ -63,14 +63,14 @@ namespace Insight.Database.CodeGenerator
 		/// </summary>
 		private ObjectReader _objectReader;
 
-        /// <summary>
-        /// Number of rows read.
-        /// </summary>
-	    private int _readRowCount;
+		/// <summary>
+		/// Number of rows read.
+		/// </summary>
+		private int _readRowCount;
 		#endregion
 
-        #region Constructors
-        /// <summary>
+		#region Constructors
+		/// <summary>
 		/// Initializes a new instance of the ObjectListDbDataReader class.
 		/// </summary>
 		/// <param name="objectReader">The objectReader to use to read the values from an object in the list.</param>
@@ -84,6 +84,8 @@ namespace Insight.Database.CodeGenerator
 		#endregion
 
 		#region Implemented Methods
+
+#if !NETCORE || COREGAPFILL
 		/// <summary>
 		/// Returns the schema table for the data.
 		/// </summary>
@@ -92,6 +94,7 @@ namespace Insight.Database.CodeGenerator
 		{
 			return _objectReader.SchemaTable;
 		}
+#endif
 
 		/// <summary>
 		/// Read the next item from the reader.
@@ -203,9 +206,11 @@ namespace Insight.Database.CodeGenerator
 			return _objectReader.GetOrdinal(name);
 		}
 
+#if !NETCORE || COREONDESK  // Bypass for core tests on desktop (Compiling Core on Desktop)
 		public override void Close()
 		{
 		}
+#endif
 
 		public override int Depth
 		{
@@ -244,12 +249,12 @@ namespace Insight.Database.CodeGenerator
 			get { return false; }
 		}
 
-        /// <summary>
-        /// Obtains the number of rows read by the current DbDataReader.
-        /// </summary>
+		/// <summary>
+		/// Obtains the number of rows read by the current DbDataReader.
+		/// </summary>
 		public override int RecordsAffected
 		{
-            get { return _readRowCount; }
+			get { return _readRowCount; }
 		}
 		#endregion
 

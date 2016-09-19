@@ -11,6 +11,7 @@
     <RootNamespace>Insight.Database</RootNamespace>
     <AssemblyName>Insight.Database</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <IncludeFrameworkReferencesFromNuGet>false</IncludeFrameworkReferencesFromNuGet>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
@@ -25,7 +26,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETCORE;COREONDESK;COREGAPFILL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -82,6 +83,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Compatibility.tt</DependentUpon>
     </Compile>
+    <Compile Include="PlatformCompatibility\ApplicationHelpers.cs" />
+    <Compile Include="PlatformCompatibility\DelegateHelpers.cs" />
+    <Compile Include="PlatformCompatibility\ReflectionHelpers.cs" />
     <Compile Include="PlatformCompatibility\TypeExtensions.cs" />
     <Compile Include="Serialization\BooleanSerializer.cs" />
     <Compile Include="SqlConstructorAttribute.cs" />
@@ -278,6 +282,7 @@
     <None Include="Insight.Database.nuspec">
       <SubType>Designer</SubType>
     </None>
+    <None Include="project.json" />
     <None Include="Structure\Guardian.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Guardian.generated.cs</LastGenOutput>
@@ -290,7 +295,9 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>OneToOne.generated.cs</LastGenOutput>
     </None>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Structure\Query.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Query.generated.cs</LastGenOutput>

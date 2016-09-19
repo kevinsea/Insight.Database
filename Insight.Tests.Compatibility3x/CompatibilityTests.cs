@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 #pragma warning disable 0649
 
 [assembly: InternalsVisibleTo("Insight.Database")]
+[assembly: InternalsVisibleTo("Insight.Database.DynamicAssembly")]
 
 namespace Insight.Tests
 {

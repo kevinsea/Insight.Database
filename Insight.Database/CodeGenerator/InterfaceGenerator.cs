@@ -15,9 +15,7 @@ using System.Threading.Tasks;
 using Insight.Database;
 using Insight.Database.Mapping;
 using Insight.Database.Structure;
-#if NET35 || NET40 || NETCORE
 using Insight.Database.PlatformCompatibility;
-#endif
 
 namespace Insight.Database.CodeGenerator
 {
@@ -63,15 +61,7 @@ namespace Insight.Database.CodeGenerator
 		static InterfaceGenerator()
 		{
 			// make a new assembly for the generated types
-			AssemblyName an = Assembly.GetExecutingAssembly().GetName();
-
-			// TODO remove debugger condition for v6
-			if (StaticFieldStorage.DebuggerIsAttached())  // Make the dynamic assembly have a unique name.  Fixes debugger issue #224.  
-				an.Name = an.Name + ".DynamicAssembly";
-
-			AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-			
-			_moduleBuilder = ab.DefineDynamicModule(an.Name);
+			_moduleBuilder = ReflectionHelpers.CreateDynamicModule();
 		}
 		#endregion
 
@@ -143,11 +133,18 @@ namespace Insight.Database.CodeGenerator
 			// create the type
 			try
 			{
-				Type t = tb.CreateType();
-
+#if NETCORE
+				TypeInfo newClassTypeInfo = tb.CreateTypeInfo();
 				// return the create method
-				var createMethod = t.GetTypeInfo().GetMethod("Create", _ifuncDbConnectionParameterTypes);
-				return (Func<Func<IDbConnection>, object>)Delegate.CreateDelegate(typeof(Func<Func<IDbConnection>, object>), createMethod);
+				var createMethod = newClassTypeInfo.GetMethod("Create", _ifuncDbConnectionParameterTypes);
+				var del = (Func<Func<IDbConnection>, object>)createMethod.CreateDelegate(typeof(Func<Func<IDbConnection>, object>));
+#else
+				Type newClassType = tb.CreateType();
+				// return the create method
+				var createMethod = newClassType.GetMethod("Create", _ifuncDbConnectionParameterTypes);
+				var del = (Func<Func<IDbConnection>, object>)Delegate.CreateDelegate(typeof(Func<Func<IDbConnection>, object>), createMethod);
+#endif
+				return del;
 			}
 			catch (TypeLoadException e)
 			{
@@ -191,10 +188,21 @@ namespace Insight.Database.CodeGenerator
 
 			// call the base constructor first
 			var baseConstructorParameters = singleThreaded ? _idbConnectionParameterTypes : _ifuncDbConnectionParameterTypes;
-			var baseConstructor = tb.BaseType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, baseConstructorParameters, null) ??
-								  tb.BaseType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null);
+
+#if NETCORE
+			var baseConstructor = TypeExtensionsCore.GetInstanceConstructor(tb.BaseType, baseConstructorParameters) ??
+								  TypeExtensionsCore.GetInstanceConstructor(tb.BaseType, Type.EmptyTypes);
+
+#else
+			BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+			var baseConstructor = tb.BaseType.GetTypeInfo().GetConstructor(bindingFlags, null, baseConstructorParameters, null) ??
+								  tb.BaseType.GetTypeInfo().GetConstructor(bindingFlags, null, Type.EmptyTypes, null);
+#endif
+
 			if (baseConstructor == null)
-				throw new InvalidOperationException(String.Format(CultureInfo.InvariantCulture, "{0} cannot be implemented Insight.Database. Make sure that the class has a default constructor, or another constructor that Insight can call.", tb.BaseType.GetTypeInfo().FullName));
+				throw new InvalidOperationException(String.Format(CultureInfo.InvariantCulture, "{0} cannot be implemented by Insight.Database. Make sure that the class has a default constructor, or another constructor that Insight can call."
+					, tb.BaseType.GetTypeInfo().FullName));
+
 			var hasParameters = (baseConstructor.GetParameters().Length == 1);
 			ctor0IL.Emit(OpCodes.Ldarg_0);
 			if (hasParameters)
@@ -242,9 +250,9 @@ namespace Insight.Database.CodeGenerator
 
 			return getConnection;
 		}
-		#endregion
+#endregion
 
-		#region Internal Members
+#region Internal Members
 		/// <summary>
 		/// Finds all of the methods on a given interface.
 		/// </summary>
@@ -282,7 +290,7 @@ namespace Insight.Database.CodeGenerator
 
 			// get the sql attributes from the  method and class/interface
 			var sqlAttribute = interfaceMethod.GetCustomAttributes(false).OfType<SqlAttribute>().FirstOrDefault() ?? new SqlAttribute();
-			var typeSqlAttribute = interfaceMethod.DeclaringType.GetCustomAttributes(false).OfType<SqlAttribute>().FirstOrDefault() ?? new SqlAttribute();
+			var typeSqlAttribute = interfaceMethod.DeclaringType.GetTypeInfo().GetCustomAttributes(false).OfType<SqlAttribute>().FirstOrDefault() ?? new SqlAttribute();
 
 			// calculate the query parameters
 			var schema = sqlAttribute.Schema ?? typeSqlAttribute.Schema;
@@ -784,7 +792,11 @@ namespace Insight.Database.CodeGenerator
 
 			ctorIL.Emit(OpCodes.Ret);
 
+#if NETCORE
+			return tb.CreateTypeInfo().AsType();
+#else
 			return tb.CreateType();
+#endif
 		}
 
 		/// <summary>
@@ -857,6 +869,6 @@ namespace Insight.Database.CodeGenerator
 			il.Emit(OpCodes.Ldarg, (int)interfaceParameter.Position + 1);
 			return true;
 		}
-		#endregion
+#endregion
 	}
 }

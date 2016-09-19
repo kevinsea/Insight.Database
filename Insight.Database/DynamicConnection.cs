@@ -14,7 +14,7 @@ using System.Threading;
 using Insight.Database.CodeGenerator;
 using Insight.Database.Providers;
 using Insight.Database.Structure;
-#if NET35 || NET40
+#if NET35 || NET40 || NETCORE
 using Insight.Database.PlatformCompatibility;
 #endif
 
@@ -168,7 +168,7 @@ namespace Insight.Database
 						returns = (IQueryReader)args[i + unnamedParameterCount];
 						specialParameters++;
 						break;
-					
+
 					case "outputParameters":
 						outputParameters = args[i + unnamedParameterCount];
 						specialParameters++;
@@ -244,7 +244,7 @@ namespace Insight.Database
 							argumentName == "returns" ||
 #if !NOCOMPATIBILITY
 							argumentName == "withGraph" ||
-							argumentName == "withGraphs" || 
+							argumentName == "withGraphs" ||
 #endif
 							argumentName == "outputParameters")
 							continue;
@@ -317,11 +317,21 @@ namespace Insight.Database
 		/// <returns>The result of the invocation.</returns>
 		private static object CallQuery(IDbCommand command, IQueryReader queryReader, object outputParameters)
 		{
+
+#if NETCORE
+			var method = _queryMethods.GetOrAdd(
+				queryReader.ReturnType,
+				t => (Func<IDbCommand, IQueryReader, CommandBehavior, object, object>)DelegateHelpers.CreateDelegate(
+					typeof(Func<IDbCommand, IQueryReader, CommandBehavior, object, object>),
+					typeof(DBCommandExtensions).GetMethod("QueryCoreUntyped", BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(t)));
+#else
 			var method = _queryMethods.GetOrAdd(
 				queryReader.ReturnType,
 				t => (Func<IDbCommand, IQueryReader, CommandBehavior, object, object>)Delegate.CreateDelegate(
 					typeof(Func<IDbCommand, IQueryReader, CommandBehavior, object, object>),
 					typeof(DBCommandExtensions).GetMethod("QueryCoreUntyped", BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(t)));
+#endif
+
 			return method(command, queryReader, CommandBehavior.Default, outputParameters);
 		}
 
@@ -334,15 +344,27 @@ namespace Insight.Database
 		/// <returns>The result of the invocation.</returns>
 		private static object CallQueryAsync(IDbCommand command, IQueryReader queryReader, CancellationToken? cancellationToken)
 		{
+
+#if NETCORE
+			var method = _queryAsyncMethods.GetOrAdd(
+				queryReader.ReturnType,
+				t => (Func<IDbCommand, IQueryReader, CommandBehavior, CancellationToken?, object, object>)DelegateHelpers.CreateDelegate(
+					typeof(Func<IDbCommand, IQueryReader, CommandBehavior, CancellationToken?, object, object>),
+					typeof(DBConnectionExtensions).GetMethod("QueryCoreAsyncUntyped", BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(t)));
+#else
 			var method = _queryAsyncMethods.GetOrAdd(
 				queryReader.ReturnType,
 				t => (Func<IDbCommand, IQueryReader, CommandBehavior, CancellationToken?, object, object>)Delegate.CreateDelegate(
 					typeof(Func<IDbCommand, IQueryReader, CommandBehavior, CancellationToken?, object, object>),
 					typeof(DBConnectionExtensions).GetMethod("QueryCoreAsyncUntyped", BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(t)));
+#endif
 			return method(command, queryReader, CommandBehavior.Default, cancellationToken, null);
 		}
+
 		#endregion
-#endif
+#endif  // of !NODYNAMIC
+
+		#endregion  // DynamicObject Members
 
 		/// <summary>
 		/// Derive the parameters that are needed to execute a given command.
@@ -364,7 +386,6 @@ namespace Insight.Database
 
 			provider.FixupCommand(cmd);
 		}
-		#endregion
 
 		#region IDbConnection Members
 		/// <inheritdoc/>

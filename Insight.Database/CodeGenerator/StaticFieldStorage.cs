@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using Insight.Database.PlatformCompatibility;
 
 namespace Insight.Database.CodeGenerator
 {
@@ -24,11 +25,6 @@ namespace Insight.Database.CodeGenerator
 		private static ModuleBuilder _dynamicModule;
 
 		/// <summary>
-		/// Temporary variable to cache whether a debugger is attached. Remove in v6.
-		/// </summary>
-		private static bool? _isDebuggerAttached;
-
-		/// <summary>
 		/// The cache of the static fields.
 		/// </summary>
 		private static Dictionary<Tuple<ModuleBuilder, object>, FieldInfo> _fields = new Dictionary<Tuple<ModuleBuilder, object>, FieldInfo>();
@@ -40,14 +36,7 @@ namespace Insight.Database.CodeGenerator
 		static StaticFieldStorage()
 		{
 			// create a shared assembly for all of the static fields to live in
-			AssemblyName an = Assembly.GetExecutingAssembly().GetName();
-
-			// TODO remove debugger condition for v6
-			if (DebuggerIsAttached())  // Make the dynamic assembly have a unique name.  Fixes debugger issue #224.  
-				an.Name = an.Name + ".DynamicAssembly";
-
-			AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-			_dynamicModule = ab.DefineDynamicModule(an.Name);
+			_dynamicModule = ReflectionHelpers.CreateDynamicModule();
 		}
 
 		/// <summary>
@@ -72,19 +61,6 @@ namespace Insight.Database.CodeGenerator
 		}
 
 		/// <summary>
-		/// Indicates if the debugger is attached.  Only evaluated once so that the answer is stable
-		/// Temporary method, remove in v6
-		/// </summary>
-		/// <returns>True if there is a debugger attached.</returns>
-		internal static bool DebuggerIsAttached()
-		{
-			if (!_isDebuggerAttached.HasValue)
-				_isDebuggerAttached = Debugger.IsAttached;
-
-			return _isDebuggerAttached.Value;
-		}
-
-		/// <summary>
 		/// Creates a static field that contains the given value.
 		/// </summary>
 		/// <param name="moduleBuilder">The modulebuilder to write to.</param>
@@ -95,7 +71,12 @@ namespace Insight.Database.CodeGenerator
 			// create a type based on DbConnectionWrapper and call the default constructor
 			TypeBuilder tb = moduleBuilder.DefineType(Guid.NewGuid().ToString());
 			tb.DefineField("_storage", value.GetType(), FieldAttributes.Static | FieldAttributes.Public);
+
+#if NETCORE
+			TypeInfo t = tb.CreateTypeInfo();
+#else
 			Type t = tb.CreateType();
+#endif
 
 			var field = t.GetField("_storage", BindingFlags.Static | BindingFlags.Public);
 			field.SetValue(null, value);

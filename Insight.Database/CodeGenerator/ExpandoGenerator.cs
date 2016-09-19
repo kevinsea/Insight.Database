@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-#if NET35 || NET40
+#if NET35 || NET40 || NETCORE
 using Insight.Database.PlatformCompatibility;
 #endif
 
@@ -22,15 +22,27 @@ namespace Insight.Database.CodeGenerator
 		/// </summary>
 		private static ConcurrentDictionary<Type, Func<object, FastExpando>> _converters = new ConcurrentDictionary<Type, Func<object, FastExpando>>();
 
+
 		/// <summary>
 		/// The default constructor for type T.
 		/// </summary>
-		private static ConstructorInfo _constructor = typeof(FastExpando).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+#if NETCORE
+		private static ConstructorInfo _constructor =TypeExtensionsCore.GetInstanceConstructor(typeof(FastExpando), Type.EmptyTypes);
+#else
+		private static BindingFlags _anyInstancebindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+		private static ConstructorInfo _constructor = typeof(FastExpando).GetConstructor(_anyInstancebindingFlags, null, Type.EmptyTypes, null);
+#endif
 
 		/// <summary>
 		/// The FastExpando.SetValue method.
 		/// </summary>
-		private static MethodInfo _fastExpandoSetValue = typeof(FastExpando).GetMethod("SetValue", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(string), typeof(object) }, null);
+#if NETCORE
+		private static MethodInfo _fastExpandoSetValue = TypeExtensionsCore.GetInstanceMethod(typeof(FastExpando),"SetValue"
+																						, new Type[] { typeof(string), typeof(object) });
+#else
+		private static MethodInfo _fastExpandoSetValue = typeof(FastExpando).GetMethod("SetValue", _anyInstancebindingFlags
+														, null, new Type[] { typeof(string), typeof(object) }, null);
+#endif
 
 		/// <summary>
 		/// Converts an object to a FastExpando.
@@ -69,8 +81,8 @@ namespace Insight.Database.CodeGenerator
 			// for each public field or method, get the value
 			foreach (ClassPropInfo accessor in ClassPropInfo.GetMembersForType(type).Where(m => m.CanGetMember))
 			{
-				il.Emit(OpCodes.Dup);										// push expando - so we can call set value
-				il.Emit(OpCodes.Ldstr, accessor.Name);						// push name
+				il.Emit(OpCodes.Dup);                                       // push expando - so we can call set value
+				il.Emit(OpCodes.Ldstr, accessor.Name);                      // push name
 
 				// get the value of the field or property
 				il.Emit(OpCodes.Ldloc, source);

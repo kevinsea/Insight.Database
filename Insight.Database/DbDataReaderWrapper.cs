@@ -60,7 +60,7 @@ namespace Insight.Database
 			// finally copy the data
 			length = Math.Min((int)length, array.Length - (int)dataOffset);
 			if (length > 0)
-				Array.Copy(array, dataOffset, buffer, bufferOffset, length);
+				Array.Copy(array, (int)dataOffset, buffer, bufferOffset, length);  // Cast dataOffset to make core happy, already checked int32 above
 
 			return length;
 		}

@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Insight.Database.PlatformCompatibility;
 
 namespace Insight.Database.Mapping
 {
@@ -28,7 +30,7 @@ namespace Insight.Database.Mapping
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix"), SuppressMessage("Microsoft.StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "The classes are related by implementing multiple generic signatures.")]
 	public class MappingCollection<TMapper> : MappingCollection where TMapper : IMapper
 	{
-		#region Private Members
+#region Private Members
 		/// <summary>
 		/// The child binding mode that this is bound to.
 		/// </summary>
@@ -48,9 +50,9 @@ namespace Insight.Database.Mapping
 		/// Tracks if child binding is enabled.
 		/// </summary>
 		private Dictionary<Type, bool> _childBindingEnabled = new Dictionary<Type, bool>();
-		#endregion
+#endregion
 
-		#region Constructors
+#region Constructors
 		/// <summary>
 		/// Initializes a new instance of the MappingCollection class.
 		/// </summary>
@@ -59,16 +61,16 @@ namespace Insight.Database.Mapping
 		{
 			_bindChildFor = bindChildFor;
 		}
-		#endregion
+#endregion
 
-		#region Properties
+#region Properties
 		/// <summary>
 		/// Gets the mappers in the configuration.
 		/// </summary>
 		internal IEnumerable<TMapper> Mappers { get { return _mappers; } }
-		#endregion
+#endregion
 
-		#region Public Methods
+#region Public Methods
 		/// <summary>
 		/// Enables binding to child fields for all objects.
 		/// </summary>
@@ -162,9 +164,9 @@ namespace Insight.Database.Mapping
 			_mappers.Clear();
 			return this;
 		}
-		#endregion
+#endregion
 
-		#region Common Replacement Functions
+#region Common Replacement Functions
 		/// <summary>
 		/// Adds a removal operation that uses a Regex to determine the text to remove.
 		/// </summary>
@@ -276,15 +278,15 @@ namespace Insight.Database.Mapping
 		{
 			return RemoveSuffixes<object>(suffix);
 		}
-		#endregion
+#endregion
 
 		/// <inheritdoc/>
 		internal override bool CanBindChild(Type type)
 		{
-			for (; type != null; type = type.BaseType)
+			for (; type != null; type = type.GetTypeInfo().BaseType)
 			{
 				// attributes on the type override any other configuration
-				var bindAttribute = type.GetCustomAttributes(typeof(BindChildrenAttribute), true).OfType<BindChildrenAttribute>().FirstOrDefault();
+				var bindAttribute = type.GetTypeInfo().GetCustomAttributes(typeof(BindChildrenAttribute), true).OfType<BindChildrenAttribute>().FirstOrDefault();
 				if (bindAttribute != null)
 					return bindAttribute.For.HasFlag(_bindChildFor);
 

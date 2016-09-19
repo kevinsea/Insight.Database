@@ -5,9 +5,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Security;
-using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
+
+#if !NETCORE
+using System.Security.Permissions;
+#endif
 
 namespace Insight.Database
 {
@@ -37,20 +40,23 @@ namespace Insight.Database
 		/// Initializes a new instance of the DbConnectionWrapperProviderFactory class.
 		/// </summary>
 		public DbConnectionWrapperProviderFactory()
-        {
-            var field = typeof(T).GetField("Instance", BindingFlags.Public | BindingFlags.Static);
-            if (field == null)
-                throw new NotSupportedException("Provider doesn't have Instance property.");
+		{
+			var field = typeof(T).GetField("Instance", BindingFlags.Public | BindingFlags.Static);
+			if (field == null)
+				throw new NotSupportedException("Provider doesn't have Instance property.");
 
-            InnerFactory = (T)field.GetValue(null);
-        }
+			InnerFactory = (T)field.GetValue(null);
+		}
 
 		#region Implementation
+
+#if !NETCORE
 		/// <inheritdoc/>
 		public override bool CanCreateDataSourceEnumerator
 		{
 			get { return InnerFactory.CanCreateDataSourceEnumerator; }
 		}
+#endif
 
 		/// <inheritdoc/>
 		public override DbCommand CreateCommand()
@@ -58,11 +64,13 @@ namespace Insight.Database
 			return InnerFactory.CreateCommand();
 		}
 
+#if !NETCORE
 		/// <inheritdoc/>
 		public override DbCommandBuilder CreateCommandBuilder()
 		{
 			return InnerFactory.CreateCommandBuilder();
 		}
+#endif
 
 		/// <inheritdoc/>
 		public override DbConnection CreateConnection()
@@ -76,6 +84,7 @@ namespace Insight.Database
 			return InnerFactory.CreateConnectionStringBuilder();
 		}
 
+#if !NETCORE
 		/// <inheritdoc/>
 		public override DbDataAdapter CreateDataAdapter()
 		{
@@ -87,6 +96,7 @@ namespace Insight.Database
 		{
 			return InnerFactory.CreateDataSourceEnumerator();
 		}
+#endif
 
 		/// <inheritdoc/>
 		public override DbParameter CreateParameter()
@@ -94,11 +104,14 @@ namespace Insight.Database
 			return InnerFactory.CreateParameter();
 		}
 
+#if !NETCORE
 		/// <inheritdoc/>
 		public override CodeAccessPermission CreatePermission(PermissionState state)
 		{
 			return InnerFactory.CreatePermission(state);
 		}
+#endif
+
 		#endregion
 	}
 }

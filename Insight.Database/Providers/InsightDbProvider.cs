@@ -12,9 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Insight.Database.CodeGenerator;
-#if NET35 || NET40 || NETCORE
 using Insight.Database.PlatformCompatibility;
-#endif
 
 namespace Insight.Database.Providers
 {
@@ -404,14 +402,13 @@ namespace Insight.Database.Providers
 			RegisterProvider(providerMap, new DbConnectionWrapperInsightDbProvider());
 
 			// look for any provider assemblies in the search path and load them automatically
-			var paths = new List<string>();
-			string relativeSearchPath = AppDomain.CurrentDomain.RelativeSearchPath ?? String.Empty;
-			paths.AddRange(relativeSearchPath.Split(';').Select(p => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, p)));
+			var paths = ApplicationHelpers.GetSearchPaths();
 
 			foreach (string assemblyFile in paths.Distinct()
 				.SelectMany(path => Directory.GetFiles(path, "Insight.Database.Providers.*.dll").Distinct()))
 			{
-				var assembly = Assembly.LoadFrom(assemblyFile);
+				Assembly assembly = ApplicationHelpers.LoadAssemby(assemblyFile);
+
 				foreach (var type in assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(InsightDbProvider))))
 					RegisterProvider(providerMap, (InsightDbProvider)System.Activator.CreateInstance(type));
 			}

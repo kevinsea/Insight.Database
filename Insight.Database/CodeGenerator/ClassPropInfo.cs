@@ -44,13 +44,20 @@ namespace Insight.Database.CodeGenerator
 		#endregion
 
 		#region Constructors
+
 		/// <summary>
 		/// Initializes a new instance of the ClassPropInfo class.
 		/// </summary>
 		/// <param name="memberInfo">The member to represent.</param>
-		private ClassPropInfo(MemberInfo memberInfo)
+		/// <param name="sourceType">The type this info comes from</param>
+		private ClassPropInfo(MemberInfo memberInfo, Type sourceType)
 		{
+
+#if NETCORE  // Reflected type is problematic and because of that is being dropped from .Net Core, so on core we need it passed
+			Type = sourceType;
+#else // For legacy we'll keep using the same value, but some point we should change that?
 			Type = memberInfo.ReflectedType;
+#endif
 			Name = memberInfo.Name;
 			MemberInfo = memberInfo;
 
@@ -78,9 +85,9 @@ namespace Insight.Database.CodeGenerator
 			SerializationMode = attribute.SerializationMode;
 			Serializer = attribute.Serializer;
 		}
-		#endregion
+#endregion
 
-		#region Properties
+#region Properties
 		/// <summary>
 		/// Gets the name of the database column associated with the property.
 		/// </summary>
@@ -156,9 +163,9 @@ namespace Insight.Database.CodeGenerator
 		/// Gets a value indicating whether the column name has been overridden.
 		/// </summary>
 		public bool ColumnNameIsOverridden { get { return ColumnName != Name; } }
-		#endregion
+#endregion
 
-		#region Method List Members
+#region Method List Members
 		/// <summary>
 		/// Returns the mapping between columns and set members.
 		/// </summary>
@@ -204,8 +211,8 @@ namespace Insight.Database.CodeGenerator
 						&& t != typeof(XDocument))
 					{
 						// get fields and properties. Prioritize explicitly mapped members first, then properties over fields.
-                        foreach (var p in t.GetProperties(DefaultBindingFlags).Select(m => new ClassPropInfo(m))
-                            .Union(t.GetFields(DefaultBindingFlags).Select(m => new ClassPropInfo(m)))
+                        foreach (var p in t.GetProperties(DefaultBindingFlags).Select(m => new ClassPropInfo(m, t))
+                            .Union(t.GetFields(DefaultBindingFlags).Select(m => new ClassPropInfo(m, t)))
                             .OrderBy(m => !m.ColumnNameIsOverridden)
                             .ThenBy(m => (m.FieldInfo == null) ? 0 : 1))
                         {
@@ -219,7 +226,7 @@ namespace Insight.Database.CodeGenerator
                             {
 								// we are overriding the column name at this level, so clone the property and rename it
 								members.Remove(match);
-								members.Add(new ClassPropInfo(p.MemberInfo));
+								members.Add(new ClassPropInfo(p.MemberInfo, t));
                             }
                         }
                     }
@@ -227,9 +234,9 @@ namespace Insight.Database.CodeGenerator
 					return new ReadOnlyCollection<ClassPropInfo>(members);
 				});
 		}
-		#endregion
+#endregion
 
-		#region Emit Members
+#region Emit Members
 		/// <summary>
 		/// Emit a call to get the value.
 		/// </summary>
@@ -267,9 +274,9 @@ namespace Insight.Database.CodeGenerator
 			else
 				throw new InvalidOperationException(String.Format(CultureInfo.InvariantCulture, "Cannot find a SetProperty method for {1} on class {0}.", Type.GetTypeInfo().FullName, Name));
 		}
-		#endregion
+#endregion
 
-		#region Accessor Members
+#region Accessor Members
 		/// <summary>
 		/// Creates a method that gets the property from the object.
 		/// </summary>
@@ -338,9 +345,9 @@ namespace Insight.Database.CodeGenerator
 
 			return (Action<TObject, TValue>)dm.CreateDelegate(typeof(Action<TObject, TValue>));
 		}
-		#endregion
+#endregion
 
-		#region Child Binding Members
+#region Child Binding Members
 		/// <summary>
 		/// Searches the type and child types for a field that matches the given column name.
 		/// </summary>
@@ -507,6 +514,6 @@ namespace Insight.Database.CodeGenerator
 
 			return String.Join(ClassPropInfo.MemberSeparator, split.Take(split.Count() - 1).ToArray());
 		}
-		#endregion
+#endregion
 	}
 }

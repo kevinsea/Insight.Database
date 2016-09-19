@@ -50,7 +50,12 @@ namespace Insight.Database
 			{
 				new DataContractJsonSerializer(type).WriteObject(stream, value);
 
-				return Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+#if NETCORE  //this could be the code for everyone, being overly cautious
+				string streamStr = Encoding.UTF8.GetString(stream.ToArray());
+#else
+				string streamStr = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+#endif
+				return streamStr;
 			}
 #endif
 		}

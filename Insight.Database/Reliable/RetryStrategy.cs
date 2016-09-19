@@ -255,7 +255,11 @@ namespace Insight.Database.Reliable
 							{
 								timer.Dispose();
 							}
-						});
+						}
+#if NETCORE                       
+						,null, -1,-1
+#endif           
+						);  //TODO test/verify timer changes
 
 						// start the timer
 						timer.Change(delay, NoRepeat);

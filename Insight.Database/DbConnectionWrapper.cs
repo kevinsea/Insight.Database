@@ -90,6 +90,7 @@ namespace Insight.Database
 			return InnerConnection.BeginTransaction(isolationLevel);
 		}
 
+#if !NETCORE
 		/// <inheritdoc/>
 		protected override bool CanRaiseEvents
 		{
@@ -98,6 +99,7 @@ namespace Insight.Database
 				return false;
 			}
 		}
+#endif
 
 		/// <inheritdoc/>
 		public override void ChangeDatabase(string databaseName)
@@ -155,6 +157,7 @@ namespace Insight.Database
 			get { return InnerConnection.State; }
 		}
 
+#if (!NETCORE)  // Unit tests suggest these are not used, and .Net Core does not have them
 		/// <inheritdoc/>
 		public override DataTable GetSchema()
 		{
@@ -172,6 +175,7 @@ namespace Insight.Database
 		{
 			return InnerConnection.GetSchema(collectionName, restrictionValues);
 		}
+#endif
 
 		/// <inheritdoc/>
 		protected override void Dispose(bool disposing)
@@ -199,6 +203,7 @@ namespace Insight.Database
 			}
 		}
 
+#if !NETCORE
 		/// <summary>
 		/// Gets the DbProviderFactory that can be used to create this connection.
 		/// </summary>
@@ -218,6 +223,8 @@ namespace Insight.Database
 				return (DbProviderFactory)type.GetField("Instance").GetValue(null);
 			}
 		}
+#endif
+
 		#endregion
 
 		#region Properties
