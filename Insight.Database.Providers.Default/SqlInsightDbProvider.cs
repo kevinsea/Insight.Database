@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 using System.Xml;
 using Insight.Database.CodeGenerator;
 using Insight.Database.Providers;
+using Insight.Database.Providers.Default.PlatformCompatibility;
+using Insight.Database.PlatformCompatibility;
+using System.Reflection;
 
 namespace Insight.Database
 {
@@ -80,20 +83,20 @@ namespace Insight.Database
 			return new SqlConnection();
 		}
 
-        /// <inheritdoc/>
-        public override IDbConnection CloneDbConnection(IDbConnection connection)
-        {
+		/// <inheritdoc/>
+		public override IDbConnection CloneDbConnection(IDbConnection connection)
+		{
 			if (connection == null) throw new ArgumentNullException("connection");
 
-            var sqlConnection = (SqlConnection)connection;
+			var sqlConnection = (SqlConnection)connection;
 
-            // check to make sure that the template connection hasn't already been used
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
-            if (!builder.IntegratedSecurity && builder.Password.IsNullOrWhiteSpace())
-                throw new InvalidOperationException("The database connection has already been opened and the password has been cleared. In order to use password-based credentials with parallel connections, set Persist Security Info=True on your connection string.");
+			// check to make sure that the template connection hasn't already been used
+			SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
+			if (!builder.IntegratedSecurity && builder.Password.IsNullOrWhiteSpace())
+				throw new InvalidOperationException("The database connection has already been opened and the password has been cleared. In order to use password-based credentials with parallel connections, set Persist Security Info=True on your connection string.");
 
-            return new SqlConnection(builder.ConnectionString);
-        }
+			return new SqlConnection(builder.ConnectionString);
+		}
 
 		/// <summary>
 		/// Derives the parameter list from a stored procedure command.
@@ -104,7 +107,12 @@ namespace Insight.Database
 			if (command == null) throw new ArgumentNullException("command");
 
 			SqlCommand sqlCommand = command as SqlCommand;
+
+#if NETCORE
+			SqlParameterHelper.DeriveParameters(sqlCommand);
+#else
 			SqlCommandBuilder.DeriveParameters(sqlCommand);
+#endif
 			AdjustSqlParameters(sqlCommand);
 
 			// remove the @ from any parameters
@@ -125,12 +133,15 @@ namespace Insight.Database
 			SqlParameter template = (SqlParameter)parameter;
 			p.SqlDbType = template.SqlDbType;
 			p.TypeName = template.TypeName;
+
+#if !NETCORE || COREONDESK  // COREONDESK = Bypass when compiling core-like on 4.x platform, e.g. for testing
 			p.UdtTypeName = template.UdtTypeName;
+#endif
 
 			return p;
 		}
 
-        /// <inheritdoc/>
+		/// <inheritdoc/>
 		public override void FixupParameter(IDbCommand command, IDataParameter parameter, DbType dbType, Type type)
 		{
 			if (command == null) throw new ArgumentNullException("command");
@@ -138,6 +149,7 @@ namespace Insight.Database
 
 			base.FixupParameter(command, parameter, dbType, type);
 
+#if !NETCORE || COREONDESK  // COREONDESK = Bypass when compiling core-like on 4.x platform, e.g. for testing
 			// when calling sql text, we have to fill in the udttypename for some parameters
 			if (command.CommandType != CommandType.StoredProcedure && IsSqlUserDefinedType(type))
 			{
@@ -159,6 +171,7 @@ namespace Insight.Database
 						break;
 				}
 			}
+#endif
 
 			// older versions of SQL Server (CE and 2005) don't support DateTime2
 			// newer versions do, so if we have a new version and it's a datetime, make it bigger
@@ -244,7 +257,11 @@ namespace Insight.Database
 		{
 			if (schemaTable == null) throw new ArgumentNullException("schemaTable");
 
+#if NETCORE //TODO DATATABLE 
+			return false;
+#else
 			return ((Type)schemaTable.Rows[index]["ProviderSpecificDataType"]) == typeof(SqlXml);
+#endif
 		}
 
 		/// <summary>
@@ -256,13 +273,22 @@ namespace Insight.Database
 		/// <param name="configure">A callback method to configure the bulk copy object.</param>
 		/// <param name="options">Options for initializing the bulk copy object.</param>
 		/// <param name="transaction">An optional transaction to participate in.</param>
-		public override void BulkCopy(IDbConnection connection, string tableName, IDataReader reader, Action<InsightBulkCopy> configure, InsightBulkCopyOptions options, IDbTransaction transaction)
+		public override void BulkCopy(IDbConnection connection, string tableName
+									, IDataReader reader
+									, Action<InsightBulkCopy> configure, InsightBulkCopyOptions options, IDbTransaction transaction)
 		{
 			var bcp = PrepareBulkCopy(connection, tableName, reader, configure, options, transaction);
 
 			using (bcp)
 			{
+#if !NETCORE
 				bcp.BulkCopy.WriteToServer(reader);
+#else
+				if (reader.GetType().GetTypeInfo().IsAssignableFrom(typeof(DbDataReader)))
+					bcp.BulkCopy.WriteToServer((DbDataReader)reader);
+				else  // TODO review the approach
+					throw new ArgumentException("On .Net Core, the reader must be of type 'DbDataReader'");
+#endif
 			}
 		}
 
@@ -283,7 +309,14 @@ namespace Insight.Database
 		{
 			using (var bcp = PrepareBulkCopy(connection, tableName, reader, configure, options, transaction))
 			{
+#if !NETCORE
 				await bcp.BulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+#else
+				if (reader.GetType().GetTypeInfo().IsAssignableFrom(typeof(DbDataReader)))
+					await bcp.BulkCopy.WriteToServerAsync((DbDataReader)reader).ConfigureAwait(false);
+				else  // TODO review the approach
+					throw new ArgumentException("On .Net Core, the reader must be of type 'DbDataReader'");
+#endif
 			}
 		}
 #endif
@@ -300,22 +333,22 @@ namespace Insight.Database
 
 			switch (sqlException.Number)
 			{
-				case 20:		// The instance of SQL Server you attempted to connect to does not support encryption.
-				case 64:		// A connection was successfully established with the server, but then an error occurred during the login process. (provider: TCP Provider, error: 0 – The specified network name is no longer available.)
-				case 233:		// The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following: the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server. (provider: TCP Provider, error: 0 – An existing connection was forcibly closed by the remote host.)
-				case 10053:		// A transport-level error has occurred when receiving results from the server. An established connection was aborted by the software in your host machine.
-				case 10054:		// A transport-level error has occurred when sending the request to the server. (provider: TCP Provider, error: 0 – An existing connection was forcibly closed by the remote host.)
-				case 10060:		// A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: TCP Provider, error: 0 – A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.)
-				case 10928:		// The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. 
-                                // However, the server is currently too busy to support requests greater than %d for this database.
-                case 10929:     // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. 
-			                    // However, the server is currently too busy to support requests greater than %d for this database.
-				case 11001:		// A network-related or instance-specific error occurred while establishing a connection to SQL Server. 
-				case 40143:		// The service has encountered an error processing your request. Please try again.
-				case 40197:		// The service has encountered an error processing your request. Please try again.
-				case 40501:		// The service is currently busy. Retry the request after 10 seconds. Code: (reason code to be decoded).
-                case 40540:		// The service has encountered an error processing your request. Please try again.
-				case 40613:		// Database XXXX on server YYYY is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of ZZZZZ.
+				case 20:        // The instance of SQL Server you attempted to connect to does not support encryption.
+				case 64:        // A connection was successfully established with the server, but then an error occurred during the login process. (provider: TCP Provider, error: 0 – The specified network name is no longer available.)
+				case 233:       // The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following: the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server. (provider: TCP Provider, error: 0 – An existing connection was forcibly closed by the remote host.)
+				case 10053:     // A transport-level error has occurred when receiving results from the server. An established connection was aborted by the software in your host machine.
+				case 10054:     // A transport-level error has occurred when sending the request to the server. (provider: TCP Provider, error: 0 – An existing connection was forcibly closed by the remote host.)
+				case 10060:     // A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: TCP Provider, error: 0 – A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.)
+				case 10928:     // The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. 
+								// However, the server is currently too busy to support requests greater than %d for this database.
+				case 10929:     // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. 
+								// However, the server is currently too busy to support requests greater than %d for this database.
+				case 11001:     // A network-related or instance-specific error occurred while establishing a connection to SQL Server. 
+				case 40143:     // The service has encountered an error processing your request. Please try again.
+				case 40197:     // The service has encountered an error processing your request. Please try again.
+				case 40501:     // The service is currently busy. Retry the request after 10 seconds. Code: (reason code to be decoded).
+				case 40540:     // The service has encountered an error processing your request. Please try again.
+				case 40613:     // Database XXXX on server YYYY is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of ZZZZZ.
 					return true;
 			}
 
@@ -368,6 +401,7 @@ namespace Insight.Database
 					p.TypeName = String.Format(CultureInfo.InvariantCulture, "[{0}].[{1}]", typeParameter["SchemaName"], typeParameter["TypeName"]);
 			}
 
+#if !NETCORE || COREONDESK  // COREONDESK = Bypass when compiling core-like on 4.x platform, e.g. for testing
 			// in SQL2008, some UDTs will not have the proper type names, so we set them with good data
 			foreach (var p in parameters.Where(p => p.SqlDbType == SqlDbType.Udt))
 			{
@@ -375,6 +409,8 @@ namespace Insight.Database
 				if (typeParameter != null)
 					p.UdtTypeName = String.Format(CultureInfo.InvariantCulture, "[{0}].[{1}]", typeParameter["SchemaName"], typeParameter["TypeName"]);
 			}
+#endif
+
 		}
 
 		/// <summary>
@@ -410,7 +446,12 @@ namespace Insight.Database
 			if (String.IsNullOrEmpty(p.TypeName))
 			{
 				p.SqlDbType = SqlDbType.Structured;
+
+#if NETCORE
+				p.TypeName = String.Format(CultureInfo.InvariantCulture, "[{0}Table]", listType.Name);
+#else  // I don't think this is right, but preserve current behavior for non Core
 				p.TypeName = String.Format(CultureInfo.InstalledUICulture, "[{0}Table]", listType.Name);
+#endif
 			}
 
 			return p.TypeName;
@@ -423,9 +464,9 @@ namespace Insight.Database
 		/// <returns>True if it is a Sql UDT.</returns>
 		private static bool IsSqlUserDefinedType(Type type)
 		{
-			return type.GetCustomAttributes(true).Any(a => a.GetType().Name == "SqlUserDefinedTypeAttribute");
+			return type.GetTypeInfo().GetCustomAttributes(true).Any(a => a.GetType().Name == "SqlUserDefinedTypeAttribute");
 		}
-		
+
 		/// <summary>
 		/// Prepares the bulk copy operation.
 		/// </summary>
@@ -466,9 +507,11 @@ namespace Insight.Database
 #endif
 
 				// map the columns by name, in case we skipped a readonly column
+
+#if !NETCORE //TODO DATATABLE 
 				foreach (DataRow row in reader.GetSchemaTable().Rows)
 					bulk.ColumnMappings.Add((string)row["ColumnName"], (string)row["ColumnName"]);
-
+#endif
 				insightBulk = new SqlInsightBulkCopy(bulk);
 				bulk = null;
 

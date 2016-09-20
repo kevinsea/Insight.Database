@@ -1,0 +1,40 @@
+{
+	"version": "1.0.0-*",
+	"buildOptions": {
+		"debugType": "portable",
+		"emitEntryPoint": false
+	},
+	"frameworks": {
+		"netcoreapp1.0": {
+			"buildOptions": {
+				"define": [ "NETCORE" ]
+			},
+			"dependencies": {
+				"Microsoft.NETCore.App": {
+					"type": "default",
+					"version": "1.0.1"
+				},
+				"System.Data.SqlClient": "4.1.0",
+				"System.Reflection": "4.1.0",
+				"System.Reflection.Extensions": "4.0.1"
+			},
+			"imports": "dnxcore50"
+		},
+		"NET45": {
+			"frameworkAssemblies": {
+				"System.Data": "4.0",
+				"System.Xml.Linq": "4.0",
+				"System.Xml": "4.0",
+				"System.Runtime.Serialization": "4.0"
+			},
+			"buildOptions": {
+				"define": [ "NETCORE", "COREONDESK", "COREGAPFILL" ]
+			}
+		}
+	},
+	"runtimes": { "win": {} },
+	"dependencies": {
+		"Insight.Database": "1.0.0-*"
+	}
+	// , "compilationOptions": { "keyFile": "..\\Insight.Database.snk" } //"keyFile": "..\\Insight.Database.snk"
+}

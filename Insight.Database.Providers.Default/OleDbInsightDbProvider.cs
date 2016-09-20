@@ -1,4 +1,7 @@
-﻿using System;
+﻿
+#if !NETCORE
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -78,3 +81,5 @@ namespace Insight.Database
 		}
 	}
 }
+
+#endif

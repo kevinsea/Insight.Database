@@ -1,23 +1,25 @@
 {
 	"version": "1.0.0-*",
 	"buildOptions": {
-		"emitEntryPoint": false
+		"emitEntryPoint": false,
+		"define": []
 	},
 	"frameworks": {
 		"netcoreapp1.0": {
 			"dependencies": {
 				"Microsoft.NETCore.App": {
-					"type": "platform",
+					"type": "default",
 					"version": "1.0.1"
 				},
 				"System.Data.SqlClient": "4.1.0",
 				"System.Reflection": "4.1.0",
 				"System.Reflection.Emit": "4.0.1",
+				"System.Reflection.Emit.Lightweight": "4.0.1",
 				"System.Reflection.Extensions": "4.0.1",
 				"System.Reflection.TypeExtensions": "4.1.0",
 				"System.Runtime.Loader": "4.0.0",
 				"System.Runtime.Serialization.Xml": "4.1.1",
-				"System.Runtime.Serialization.Json": "4.0.1",
+				"System.Runtime.Serialization.Json": "4.0.2",
 				"System.Runtime.Serialization.Formatters": "4.0.0-rc3-24212-01",
 				"System.Linq": "4.1.0",
 				"System.Threading.Timer": "4.0.1",
@@ -26,7 +28,7 @@
 			},
 			"imports": "dnxcore50",
 			"buildOptions": {
-				"define": [ "NETCORE" ]
+				"define": [ "NETCORE", "ROSLYN" ]
 			}
 		},
 		"NET45": {
@@ -37,9 +39,9 @@
 				"System.Runtime.Serialization": "4.0"
 			},
 			"buildOptions": {
-				"define": [ "NETCORE", "COREONDESK", "COREGAPFILL" ]
+				"define": [ "NET45", "ROSLYN" ]
 			}
 		}
-	}
-
+	},
+	"runtimes": { "win": {} }
 }

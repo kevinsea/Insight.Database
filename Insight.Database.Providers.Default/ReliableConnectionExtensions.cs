@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using Insight.Database;
+#if !NETCORE
+using System.Configuration;
+#endif
 
 namespace Insight.Database.Reliable
 {
@@ -13,7 +15,7 @@ namespace Insight.Database.Reliable
 	/// </summary>
 	public static class ReliableConnectionExtensions
 	{
-		#region SqlConnectionStringBuilder Extensions
+#region SqlConnectionStringBuilder Extensions
 		/// <summary>
 		/// Creates and returns a new SqlConnection.
 		/// </summary>
@@ -60,6 +62,6 @@ namespace Insight.Database.Reliable
 			return builder.ReliableConnection().Dynamic<T>();
 		}
 #endif
-		#endregion
+#endregion
 	}
 }
