@@ -40,72 +40,43 @@ namespace Insight.Database.PlatformCompatibility
 #if NETCORE
 		private const BindingFlags PublicOrPrivateInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-		public static ConstructorInfo GetInstanceConstructor(Type t, Type[] desiredConstructorTypes)
-		{
-			return GetInstanceConstructor(t.GetTypeInfo(), desiredConstructorTypes);
-		}
+        public static ConstructorInfo GetInstanceConstructor(Type t, Type[] desiredConstructorTypes)
+        {
+            return GetInstanceConstructor(t.GetTypeInfo(), desiredConstructorTypes);
+        }
 
-		public static ConstructorInfo GetInstanceConstructor(TypeInfo ti, Type[] desiredConstructorTypes)
-		{
-			ConstructorInfo matchingContructor;
+        public static ConstructorInfo GetInstanceConstructor(TypeInfo ti, Type[] desiredConstructorTypes)
+        {
+            // This fails for non-public or maybe for empty/default constructors
+            var matchingContructor = ti.GetConstructor(desiredConstructorTypes);
 
-			// This fails for non-public or maybe for empty/default constructors
-			matchingContructor = ti.GetConstructor(desiredConstructorTypes);
+            if (matchingContructor != null && !matchingContructor.IsStatic)
+                return matchingContructor;
 
-			// try with a version that takes binding flags, but not type:
-			if (matchingContructor == null)
-			{
-				var constructors = ti.GetConstructors(PublicOrPrivateInstance).ToList();
-				matchingContructor = constructors.Find(c => SignaturesMatch(desiredConstructorTypes, c.GetParameters()));
-			}
+            // try with a version that takes binding flags, but not type:
+            return ti.GetConstructors(PublicOrPrivateInstance).FirstOrDefault(c => SignaturesMatch(desiredConstructorTypes, c.GetParameters()));
+        }
 
-			if ((matchingContructor != null) && (matchingContructor.IsStatic))
-				matchingContructor = null;
+        public static MethodInfo GetInstanceMethod(Type t, string name, Type[] types)
+        {
+            return GetInstanceMethod(t.GetTypeInfo(), name, types);
+        }
 
-			return matchingContructor;
-		}
+        public static MethodInfo GetInstanceMethod(TypeInfo ti, string name, Type[] types)
+        {
+            var matchingMethod = ti.GetMethod(name, types);
 
-		public static MethodInfo GetInstanceMethod(Type t, string name, Type[] types)
-		{
+            if (matchingMethod != null && !matchingMethod.IsStatic)
+                return matchingMethod;
 
-			MethodInfo matchingMethod = t.GetTypeInfo().GetMethod(name, types);
+            return ti.GetMethods(PublicOrPrivateInstance).FirstOrDefault(m => m.Name == name && SignaturesMatch(types, m.GetParameters()));
+        }
 
-			if (matchingMethod == null)
-			{
-				List<MethodInfo> methods = t.GetMethods(PublicOrPrivateInstance).ToList();
-				methods = methods.FindAll(m => m.Name == name);
-
-				matchingMethod = methods.Find(m => SignaturesMatch(types, m.GetParameters()));
-			}
-
-			return matchingMethod;
-		}
-
-		private static bool SignaturesMatch(Type[] passedTypes, ParameterInfo[] methodParameters)
-		{
-			Type[] methodTypes = methodParameters.Select(p => p.ParameterType).ToArray();
-
-			return SignaturesMatch(passedTypes, methodTypes);
-		}
-
-		private static bool SignaturesMatch(Type[] passedTypes, Type[] methodTypes)
-		{
-
-			//TODO must test this
-
-			if (passedTypes.Count() != methodTypes.Count())
-				return false;
-
-			bool isMatchingConstructor = true; // start with true to handle an empty match
-
-			for (int i = 0; i < methodTypes.Count(); i++)
-			{
-				isMatchingConstructor &= passedTypes[i] == methodTypes[i];
-			}
-
-			return isMatchingConstructor;
-		}
+        private static bool SignaturesMatch(IEnumerable<Type> passedTypes, IEnumerable<ParameterInfo> methodParameters)
+        {
+            return methodParameters.Select(p => p.ParameterType).SequenceEqual(passedTypes);
+        }
 
 #endif
-	}
+    }
 }
