@@ -48,8 +48,7 @@ namespace Insight.Database.PlatformCompatibility
 
 		protected override Assembly Load(AssemblyName assemblyName)
 		{
-			throw new NotImplementedException("AssemblyLoadContext issue");
-			// return _context.LoadFile(Path.Combine(_path.FullName, assemblyName.Name + ".dll"));
+			return Assembly.Load(assemblyName);
 		}
 
 	}
