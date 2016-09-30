@@ -84,7 +84,9 @@
       <DependentUpon>Compatibility.tt</DependentUpon>
     </Compile>
     <Compile Include="PlatformCompatibility\ApplicationHelpers.cs" />
+    <Compile Include="PlatformCompatibility\DataReaderHelpers.cs" />
     <Compile Include="PlatformCompatibility\DelegateHelpers.cs" />
+    <Compile Include="PlatformCompatibility\IColumnSchema.cs" />
     <Compile Include="PlatformCompatibility\ReflectionHelpers.cs" />
     <Compile Include="PlatformCompatibility\TypeExtensions.cs" />
     <Compile Include="Serialization\BooleanSerializer.cs" />

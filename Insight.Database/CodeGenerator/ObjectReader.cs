@@ -10,6 +10,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using Insight.Database.Mapping;
+using Insight.Database.PlatformCompatibility;
 using Insight.Database.Providers;
 using Insight.Database.Structure;
 #if NET35 || NET40
@@ -54,24 +55,24 @@ namespace Insight.Database.CodeGenerator
 		{
 			var provider = InsightDbProvider.For(command);
 
-            // create a mapping, and only keep mappings that match our modified schema
-            var mappings = ColumnMapping.MapColumns(type, reader).ToList();
+			// create a mapping, and only keep mappings that match our modified schema
+			var mappings = ColumnMapping.MapColumns(type, reader).ToList();
 
-            // copy the schema and fix it
-            SchemaTable = reader.GetSchemaTable().Copy();
-			FixupSchemaNumericScale();
-			FixupSchemaRemoveReadOnlyColumns(mappings);
+			// copy the schema and fix it
+			ColumnSchemaProvider = DataReaderHelpers.GetColumnSchemaProvider(reader);
+			FixupSchemaNumericScale(ColumnSchemaProvider);
+			FixupSchemaRemoveReadOnlyColumns(ColumnSchemaProvider, mappings);
 
-		    IsAtomicType = TypeHelper.IsAtomicType(type);
+			IsAtomicType = TypeHelper.IsAtomicType(type);
 			if (!IsAtomicType)
 			{
-				int columnCount = SchemaTable.Rows.Count;
+				int columnCount = ColumnSchemaProvider.Count;
 				_accessors = new Func<object, object>[columnCount];
 				_memberTypes = new Type[columnCount];
 
 				for (int i = 0; i < columnCount; i++)
 				{
-                    var mapping = mappings[i];
+					var mapping = mappings[i];
 					if (mapping == null)
 						continue;
 
@@ -93,7 +94,7 @@ namespace Insight.Database.CodeGenerator
 						il.Emit(OpCodes.Ldloca_S, valueHolder);
 					}
 					else
-						il.Emit(OpCodes.Isinst, type);					// cast object -> type
+						il.Emit(OpCodes.Isinst, type);                  // cast object -> type
 
 					// get the value from the object
 					var readyToSetLabel = il.DefineLabel();
@@ -103,7 +104,7 @@ namespace Insight.Database.CodeGenerator
 
 					// if the type is nullable, handle nulls
 					Type sourceType = propInfo.MemberType;
-					Type targetType = (Type)SchemaTable.Rows[i]["DataType"];
+					Type targetType = ColumnSchemaProvider.GetColumn(i).DataType;
 					Type underlyingType = Nullable.GetUnderlyingType(sourceType);
 					if (underlyingType != null)
 					{
@@ -166,7 +167,7 @@ namespace Insight.Database.CodeGenerator
 		/// <summary>
 		/// Gets a DataTable containing the expected schema for the type.
 		/// </summary>
-		public DataTable SchemaTable { get; private set; }
+		public IColumnSchemaProvider ColumnSchemaProvider { get; private set; }
 
 		/// <summary>
 		/// Gets a value indicating whether the given type is a value type.
@@ -197,8 +198,11 @@ namespace Insight.Database.CodeGenerator
 		/// <returns>The name of the column, or null if there is no mapping.</returns>
 		public string GetName(int ordinal)
 		{
-			var row = (DataRow)SchemaTable.Rows[ordinal];
-			return (string)row["ColumnName"];
+			var column = ColumnSchemaProvider.GetColumn(ordinal);
+
+			return column == null ?
+				null :
+				column.ColumnName;
 		}
 
 		/// <summary>
@@ -208,11 +212,7 @@ namespace Insight.Database.CodeGenerator
 		/// <returns>The matching ordinal.</returns>
 		public int GetOrdinal(string name)
 		{
-			for (int i = 0; i < SchemaTable.Rows.Count; i++)
-				if (String.Compare(name, GetName(i), StringComparison.OrdinalIgnoreCase) == 0)
-					return i;
-
-			return -1;
+			return ColumnSchemaProvider.GetColumnIndex(name);
 		}
 
 		/// <summary>
@@ -255,20 +255,19 @@ namespace Insight.Database.CodeGenerator
 		/// but the TDS parser doesn't like the ones set on money, smallmoney and date
 		/// so we have to override them
 		/// </summary>
-		private void FixupSchemaNumericScale()
+		private void FixupSchemaNumericScale(IColumnSchemaProvider columnSchemaProvider)
 		{
-			if (SchemaTable.Columns.Contains("DataTypeName"))
+			foreach (IColumnSchema columnSchema in columnSchemaProvider)
 			{
-				SchemaTable.Columns["NumericScale"].ReadOnly = false;
-				foreach (DataRow row in SchemaTable.Rows)
+				var dataTypeName = columnSchema.DataTypeName;
+				if (!string.IsNullOrWhiteSpace(dataTypeName))
 				{
-					string dataType = row["DataTypeName"].ToString();
-					if (String.Equals(dataType, "money", StringComparison.OrdinalIgnoreCase))
-						row["NumericScale"] = 4;
-					else if (String.Equals(dataType, "smallmoney", StringComparison.OrdinalIgnoreCase))
-						row["NumericScale"] = 4;
-					else if (String.Equals(dataType, "date", StringComparison.OrdinalIgnoreCase))
-						row["NumericScale"] = 0;
+					if (string.Equals(dataTypeName, "money", StringComparison.OrdinalIgnoreCase))
+						columnSchema.NumericScale = 4;
+					else if (string.Equals(dataTypeName, "smallmoney", StringComparison.OrdinalIgnoreCase))
+						columnSchema.NumericScale = 4;
+					else if (string.Equals(dataTypeName, "date", StringComparison.OrdinalIgnoreCase))
+						columnSchema.NumericScale = 0;
 				}
 			}
 		}
@@ -276,31 +275,25 @@ namespace Insight.Database.CodeGenerator
 		/// <summary>
 		/// Fix the schema by removing any readonly columns and adjusting the column ordinal.
 		/// </summary>
-        /// <param name="mappings">A list of field mappings to adjust with the schema.</param>
-		private void FixupSchemaRemoveReadOnlyColumns(List<FieldMapping> mappings)
+		/// <param name="mappings">A list of field mappings to adjust with the schema.</param>
+		private void FixupSchemaRemoveReadOnlyColumns(IColumnSchemaProvider columnSchemaProvider, List<FieldMapping> mappings)
 		{
-			const string ColumnOrdinal = "ColumnOrdinal";
-
-			var isReadOnlyColumn = SchemaTable.Columns.IndexOf("IsReadOnly");
-			var isIdentityColumn = SchemaTable.Columns.IndexOf("IsIdentity");
-
 			// remove any mappings for readonly columns, except identities, which we may want to insert
-			if (isReadOnlyColumn != -1)
+			if (columnSchemaProvider.Any(x => x.IsReadOnly))
 			{
-				SchemaTable.Columns[ColumnOrdinal].ReadOnly = false;
-
-				for (int i = 0; i < SchemaTable.Rows.Count; i++)
+				for (int i = 0; i < columnSchemaProvider.Count; i++)
 				{
-					var row = SchemaTable.Rows[i];
-					row[ColumnOrdinal] = i;
+					var column = columnSchemaProvider.GetColumn(i);
 
-					bool isReadOnly = (isReadOnlyColumn == -1) ? false : row.IsNull(isReadOnlyColumn) ? false : Convert.ToBoolean(row[isReadOnlyColumn], CultureInfo.InvariantCulture);
-					bool isIdentity = (isIdentityColumn == -1) ? false : row.IsNull(isIdentityColumn) ? false : Convert.ToBoolean(row[isIdentityColumn], CultureInfo.InvariantCulture);
+					// need to add ordinal updating back here
+					// maybe have the provider do this internally instead?
+					column.ColumnOrdinal = i;
 
-					if (isReadOnly && !isIdentity)
+					if (column.IsReadOnly || !column.IsIdentity)
 					{
-						SchemaTable.Rows.Remove(row);
-                        mappings.RemoveAt(i);
+						mappings.RemoveAt(i);
+						columnSchemaProvider.RemoveAt(i);
+
 						i--;
 					}
 				}

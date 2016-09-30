@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using Insight.Database.PlatformCompatibility;
 
 namespace Insight.Database.CodeGenerator
 {
@@ -92,7 +93,10 @@ namespace Insight.Database.CodeGenerator
 		/// <returns>The schema table for the data.</returns>
 		public override DataTable GetSchemaTable()
 		{
-			return _objectReader.SchemaTable;
+			// Come back to this later. maybe do some casting based on .netcore or not?
+			//return _objectReader.ColumnSchemaProvider;
+
+			return null;
 		}
 #endif
 
@@ -193,7 +197,7 @@ namespace Insight.Database.CodeGenerator
 		#region Stub Methods
 		public override int FieldCount
 		{
-			get { return _objectReader.SchemaTable.Rows.Count; }
+			get { return _objectReader.ColumnSchemaProvider.Count; }
 		}
 
 		public override string GetName(int ordinal)
