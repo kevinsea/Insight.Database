@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using Insight.Database.PlatformCompatibility;
 
 namespace Insight.Database.CodeGenerator
 {
@@ -92,7 +93,9 @@ namespace Insight.Database.CodeGenerator
 		/// <returns>The schema table for the data.</returns>
 		public override DataTable GetSchemaTable()
 		{
-			return _objectReader.SchemaTable;
+			// TODO Come back to this later and remove?
+			 return _objectReader.ColumnSchemaProvider.GetSchemaTable();
+			
 		}
 #endif
 
@@ -193,7 +196,7 @@ namespace Insight.Database.CodeGenerator
 		#region Stub Methods
 		public override int FieldCount
 		{
-			get { return _objectReader.SchemaTable.Rows.Count; }
+			get { return _objectReader.ColumnSchemaProvider.Count; }
 		}
 
 		public override string GetName(int ordinal)

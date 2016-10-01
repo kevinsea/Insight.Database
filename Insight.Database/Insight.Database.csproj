@@ -84,7 +84,12 @@
       <DependentUpon>Compatibility.tt</DependentUpon>
     </Compile>
     <Compile Include="PlatformCompatibility\ApplicationHelpers.cs" />
+    <Compile Include="PlatformCompatibility\DataReader\DbColumnSchemaProvider.cs" />
+    <Compile Include="PlatformCompatibility\DataReader\ColumnSchemaProviderBase.cs" />
+    <Compile Include="PlatformCompatibility\DataReader\DataReaderHelpers.cs" />
+    <Compile Include="PlatformCompatibility\DataReader\DataTableColumnSchemaProvider.cs" />
     <Compile Include="PlatformCompatibility\DelegateHelpers.cs" />
+    <Compile Include="PlatformCompatibility\DataReader\IColumnSchema.cs" />
     <Compile Include="PlatformCompatibility\ReflectionHelpers.cs" />
     <Compile Include="PlatformCompatibility\TypeExtensions.cs" />
     <Compile Include="Serialization\BooleanSerializer.cs" />
