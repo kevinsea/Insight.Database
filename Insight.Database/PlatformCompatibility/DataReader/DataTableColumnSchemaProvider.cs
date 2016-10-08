@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Insight.Database.PlatformCompatibility.DataReader
 {
 
-#if !( NETCORE && !COREONDESK)
+#if !(NETCORE && !COREONDESK)
 
 	internal class DataTableColumnSchemaProvider : ColumnSchemaProviderBase
 	{
@@ -25,8 +25,7 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 			_schemaTable.Columns["ColumnOrdinal"].ReadOnly = false;
 		}
 
-		public override DataTable GetSchemaTable() => _schemaTable;
-
+		public DataTable GetSchemaTable() => _schemaTable;
 
 		public override void RemoveAt(int columnIndex)
 		{
@@ -87,6 +86,16 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 					return _dataRow.Table.Columns.Contains("IsReadOnly")
 						&& !_dataRow.IsNull("IsReadOnly")
 						&& Convert.ToBoolean(_dataRow["IsReadOnly"], CultureInfo.InvariantCulture);
+				}
+			}
+
+			public bool IsNullable
+			{
+				get
+				{
+					return _dataRow.Table.Columns.Contains("IsNullable")
+						&& !_dataRow.IsNull("IsNullable")
+						&& Convert.ToBoolean(_dataRow["IsNullable"], CultureInfo.InvariantCulture);
 				}
 			}
 

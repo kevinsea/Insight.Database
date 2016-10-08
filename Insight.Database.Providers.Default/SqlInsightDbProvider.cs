@@ -220,7 +220,7 @@ namespace Insight.Database
 					},
 					CommandBehavior.Default));
 
-			// create the structured parameter
+			// TODO NETCORE, this can't derive from DbDataReader?  // create the structured parameter
 			parameter.Value = new ObjectListDbDataReader(objectReader, list);
 		}
 
@@ -255,11 +255,11 @@ namespace Insight.Database
 		/// <returns>True if the column is an XML column.</returns>
 		public override bool IsXmlColumn(DataTable schemaTable, int index)
 		{
-			if (schemaTable == null) throw new ArgumentNullException("schemaTable");
 
 #if NETCORE //TODO DATATABLE 
 			return false;
 #else
+			if (schemaTable == null) throw new ArgumentNullException("schemaTable");
 			return ((Type)schemaTable.Rows[index]["ProviderSpecificDataType"]) == typeof(SqlXml);
 #endif
 		}
@@ -284,8 +284,9 @@ namespace Insight.Database
 #if !NETCORE
 				bcp.BulkCopy.WriteToServer(reader);
 #else
-				if (reader.GetType().GetTypeInfo().IsAssignableFrom(typeof(DbDataReader)))
-					bcp.BulkCopy.WriteToServer((DbDataReader)reader);
+				var dbDataReader = reader as DbDataReader;
+				if (dbDataReader != null)
+					bcp.BulkCopy.WriteToServer(dbDataReader);
 				else  // TODO review the approach
 					throw new ArgumentException("On .Net Core, the reader must be of type 'DbDataReader'");
 #endif
@@ -312,8 +313,10 @@ namespace Insight.Database
 #if !NETCORE
 				await bcp.BulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
 #else
-				if (reader.GetType().GetTypeInfo().IsAssignableFrom(typeof(DbDataReader)))
-					await bcp.BulkCopy.WriteToServerAsync((DbDataReader)reader).ConfigureAwait(false);
+
+				var dbDataReader = reader as DbDataReader;
+				if (dbDataReader != null)
+					await bcp.BulkCopy.WriteToServerAsync(dbDataReader).ConfigureAwait(false);
 				else  // TODO review the approach
 					throw new ArgumentException("On .Net Core, the reader must be of type 'DbDataReader'");
 #endif

@@ -19,8 +19,6 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 		int GetColumnIndex(string columnName);
 
 		void RemoveAt(int columnIndex);
-
-		DataTable GetSchemaTable();
 	}
 
 	internal abstract class ColumnSchemaProviderBase : IColumnSchemaProvider
@@ -71,7 +69,6 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 			return -1;
 		}
 
-		public abstract DataTable GetSchemaTable();
 	}
 
 }

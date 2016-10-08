@@ -6,10 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Insight.Database;
-using Microsoft.SqlServer.Types;
 using NUnit.Framework;
 using Insight.Tests.Cases;
 using Insight.Database.Structure;
+using Insight.Tests.PlatformCompatibility;
 
 #pragma warning disable 0649
 
@@ -18,7 +18,7 @@ namespace Insight.Tests
 	[TestFixture]
 	public class StructureTest : BaseTest
 	{
-		#region Default Recordset Test
+#region Default Recordset Test
 		[Recordset(typeof(HasDefaultRecordset), typeof(Beer))]
 		class HasDefaultRecordset
 		{
@@ -34,9 +34,9 @@ namespace Insight.Tests
 			Assert.IsNotNull(result.Beer);
 			Assert.AreEqual(2, result.Beer.ID);
 		}
-		#endregion
+#endregion
 
-		#region Default ID Test
+#region Default ID Test
 		class HasDefaultID
 		{
 			[RecordId]
@@ -56,9 +56,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, result.List.Count);
 			Assert.AreEqual(2, result.List[0].ID);
 		}
-		#endregion
+#endregion
 
-		#region Default List Test
+#region Default List Test
 		class HasDefaultList
 		{
 			public int ID;
@@ -82,9 +82,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, result.List.Count);
 			Assert.AreEqual(2, result.List[0].ID);
 		}
-		#endregion
+#endregion
 
-		#region Read-Only List Test
+#region Read-Only List Test
 		class HasReadOnlyList
 		{
 			public int ID;
@@ -105,9 +105,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, result.List.Count);
 			Assert.AreEqual(2, result.List[0].ID);
 		}
-		#endregion
+#endregion
 
-		#region Inline Column Overrides
+#region Inline Column Overrides
 		[Test]
 		public void CanOverrideColumnsInline()
 		{
@@ -122,9 +122,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, result.ID);
 			Assert.AreEqual(2, result.Beer.ID);
 		}
-		#endregion
+#endregion
 
-		#region Multi-Class Reader Tests
+#region Multi-Class Reader Tests
 		class MyClass
 		{
 		}
@@ -183,9 +183,9 @@ namespace Insight.Tests
 			Assert.IsTrue(results[0] is MyClassA);
 			Assert.AreEqual(9, ((MyClassA)results[0]).A);
 		}
-		#endregion
+#endregion
 
-		#region Issue 109 Tests
+#region Issue 109 Tests
 		public class ParentFor109
 		{
 			public int ID;
@@ -209,9 +209,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, results.Children.Count);
 			Assert.AreEqual(3, results.Children[0].Foo);
 		}
-		#endregion
+#endregion
 
-		#region Issue 199 Tests
+#region Issue 199 Tests
 		public abstract class BaseRecord
 		{
 			public abstract int? Id { get; set; }
@@ -239,10 +239,10 @@ namespace Insight.Tests
 			Assert.AreEqual(12345, result.Id);
 			Assert.AreEqual(99999, result.GrandChild.Id);
 		}
-		#endregion
+#endregion
 	}
 
-	#region Single Child Tests
+#region Single Child Tests
 	[TestFixture]
 	public class SingleChildTest : BaseTest
 	{
@@ -292,9 +292,9 @@ namespace Insight.Tests
 		}
 
 	}
-	#endregion
+#endregion
 
-	#region ChildMappingHelper Unit Tests
+#region ChildMappingHelper Unit Tests
 	[TestFixture]
 	public class StructureTest_ChildMappingHelperUnitTests
 	{
@@ -691,9 +691,9 @@ namespace Insight.Tests
 
 		}
 	}
-	#endregion
+#endregion
 
-	#region Issue 130 Tests
+#region Issue 130 Tests
 	[TestFixture]
 	public class Issue130 : BaseTest
 	{
@@ -787,9 +787,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, result.Children.Count);
 		}
 	}
-	#endregion
+#endregion
 
-	#region Issue 142 Tests
+#region Issue 142 Tests
 	[TestFixture]
 	public class Issue142 : BaseTest
 	{
@@ -814,9 +814,9 @@ namespace Insight.Tests
 			Assert.IsTrue(result.Children.Contains("Child2"));
 		}
 	}
-	#endregion
+#endregion
 
-	#region Issue 146 Tests
+#region Issue 146 Tests
 	[TestFixture]
 	public class Issue146 : BaseTest
 	{
@@ -847,9 +847,9 @@ namespace Insight.Tests
 			Assert.IsNull(result);
 		}
 	}
-	#endregion
+#endregion
 
-	#region Issue 160 Tests
+#region Issue 160 Tests
 	[TestFixture]
 	public class Issue160 : BaseTest
 	{
@@ -890,7 +890,7 @@ namespace Insight.Tests
 			Assert.AreEqual(0, result.Children.Count);  // FAIL! I would expect that the child wouldn't be added, but a null is added
 		}
 	}
-	#endregion
+#endregion
 
 	[TestFixture]
 	public class Issue188 : BaseTest

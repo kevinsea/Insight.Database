@@ -7,7 +7,7 @@ using Insight.Database;
 using NUnit.Framework;
 using Insight.Database.Reliable;
 using System.Data.Common;
-#if !NET35
+#if !NET35 && !NETCORE
 using Moq;
 #endif
 
@@ -339,7 +339,7 @@ namespace Insight.Tests
 		}
 		#endregion
 
-#if !NET35
+#if !NET35 && !NETCORE  // TODO fix this test for Core
 		#region Retry Tests
 		public class TestIssue215 : BaseTest
 		{

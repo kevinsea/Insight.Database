@@ -286,10 +286,6 @@ namespace Insight.Database.CodeGenerator
 				{
 					var column = columnSchemaProvider.GetColumn(i);
 
-					// need to add ordinal updating back here
-					// maybe have the provider do this internally instead?
-					column.ColumnOrdinal = i;
-
 					if (column.IsReadOnly && !column.IsIdentity)
 					{
 						mappings.RemoveAt(i);

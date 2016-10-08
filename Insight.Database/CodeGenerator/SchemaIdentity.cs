@@ -5,6 +5,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Insight.Database.PlatformCompatibility.DataReader;
 
 namespace Insight.Database.CodeGenerator
 {
@@ -41,10 +42,7 @@ namespace Insight.Database.CodeGenerator
 				return;
 
 			// we have to compare nullable, readonly and identity because it affects bulk copy
-			var schemaTable = reader.GetSchemaTable();
-			var isNullableColumn = schemaTable.Columns.IndexOf("AllowDbNull");
-			var isReadOnlyColumn = schemaTable.Columns.IndexOf("IsReadOnly");
-			var isIdentityColumn = schemaTable.Columns.IndexOf("IsIdentity");
+			var schema = DataReaderHelpers.GetColumnSchemaProvider(reader);
 
 			// we know that we are going to store this in a hashtable, so pre-calculate the hashcode
 			unchecked
@@ -54,15 +52,15 @@ namespace Insight.Database.CodeGenerator
 
 				for (int i = 0; i < fieldCount; i++)
 				{
-					var row = schemaTable.Rows[i];
+					var columnDef = schema.GetColumn(i);
 
 					var column = new ColumnIdentity()
 					{
 						Name = reader.GetName(i),
 						Type = reader.GetFieldType(i),
-						IsNullable = (isNullableColumn == -1) ? false : row.IsNull(isNullableColumn) ? false : Convert.ToBoolean(row[isNullableColumn], CultureInfo.InvariantCulture),
-						IsReadOnly = (isReadOnlyColumn == -1) ? false : row.IsNull(isReadOnlyColumn) ? false : Convert.ToBoolean(row[isReadOnlyColumn], CultureInfo.InvariantCulture),
-						IsIdentity = (isIdentityColumn == -1) ? false : row.IsNull(isIdentityColumn) ? false : Convert.ToBoolean(row[isIdentityColumn], CultureInfo.InvariantCulture),
+						IsNullable = columnDef.IsNullable,  // Nullable.GetUnderlyingType(propertyType) != null  IsNullableType(Type)
+						IsReadOnly = columnDef.IsReadOnly,
+						IsIdentity = columnDef.IsIdentity
 					};
 					_columns[i] = column;
 
@@ -140,12 +138,12 @@ namespace Insight.Database.CodeGenerator
 			/// Gets or sets the type of the column.
 			/// </summary>
 			public Type Type { get; set; }
-			
+
 			/// <summary>
 			/// Gets or sets a value indicating whether the column is nullable.
 			/// </summary>
 			public bool IsNullable { get; set; }
-	
+
 			/// <summary>
 			/// Gets or sets a value indicating whether the column is the row identity.
 			/// </summary>

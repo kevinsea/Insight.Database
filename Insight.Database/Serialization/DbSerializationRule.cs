@@ -198,8 +198,11 @@ namespace Insight.Database
 		/// <returns>The serializer.</returns>
 		internal static IDbObjectSerializer GetSerializer(IDataReader reader, int column, ClassPropInfo prop)
 		{
+
+#if !NETCORE  // HACK - fix for Core
 			if (InsightDbProvider.For(reader).IsXmlColumn(reader.GetSchemaTable(), column))
 				return XmlObjectSerializer.Serializer;
+#endif
 
 			return EvaluateRules(prop);
 		}

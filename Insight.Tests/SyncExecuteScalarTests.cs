@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Insight.Database;
 using Insight.Tests.Cases;
+using Insight.Tests.PlatformCompatibility;
 using NUnit.Framework;
 
 namespace Insight.Tests

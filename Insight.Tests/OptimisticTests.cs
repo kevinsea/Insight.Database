@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Insight.Database;
 using NUnit.Framework;
 using System.Data.Common;
+using Insight.Tests.PlatformCompatibility;
 
 namespace Insight.Tests
 {

@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using Insight.Database.PlatformCompatibility;
+using Insight.Database.PlatformCompatibility.DataReader;
 
 namespace Insight.Database.CodeGenerator
 {
@@ -86,16 +87,19 @@ namespace Insight.Database.CodeGenerator
 
 		#region Implemented Methods
 
-#if !NETCORE || COREGAPFILL
+#if !NETCORE || COREONDESK
 		/// <summary>
 		/// Returns the schema table for the data.
 		/// </summary>
 		/// <returns>The schema table for the data.</returns>
 		public override DataTable GetSchemaTable()
 		{
-			// TODO Come back to this later and remove?
-			 return _objectReader.ColumnSchemaProvider.GetSchemaTable();
-			
+			var dataTableProvider = _objectReader.ColumnSchemaProvider as DataTableColumnSchemaProvider;
+
+			if(dataTableProvider != null)
+				return dataTableProvider.GetSchemaTable();
+			else
+				throw new NotImplementedException("Expected DataTableColumnSchemaProvider.");
 		}
 #endif
 
@@ -209,7 +213,7 @@ namespace Insight.Database.CodeGenerator
 			return _objectReader.GetOrdinal(name);
 		}
 
-#if !NETCORE || COREONDESK  // Bypass for core tests on desktop (Compiling Core on Desktop)
+#if !NETCORE || COREONDESK  // DNE in core, but you can cast and do it -  Bypass for core tests on desktop (Compiling Core on Desktop)
 		public override void Close()
 		{
 		}

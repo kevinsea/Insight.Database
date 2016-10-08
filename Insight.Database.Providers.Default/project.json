@@ -1,14 +1,10 @@
 {
 	"version": "1.0.0-*",
 	"buildOptions": {
-		"debugType": "portable",
 		"emitEntryPoint": false
 	},
 	"frameworks": {
 		"netcoreapp1.0": {
-			"buildOptions": {
-				"define": [ "NETCORE" ]
-			},
 			"dependencies": {
 				"Microsoft.NETCore.App": {
 					"type": "default",
@@ -18,7 +14,9 @@
 				"System.Reflection": "4.1.0",
 				"System.Reflection.Extensions": "4.0.1"
 			},
-			"imports": "dnxcore50"
+			"buildOptions": {
+				"define": [ "NETCORE" ]
+			}
 		},
 		"NET45": {
 			"frameworkAssemblies": {
@@ -36,5 +34,6 @@
 	"dependencies": {
 		"Insight.Database": "1.0.0-*"
 	}
-	// , "compilationOptions": { "keyFile": "..\\Insight.Database.snk" } //"keyFile": "..\\Insight.Database.snk"
+}
+// , "compilationOptions": { "keyFile": "..\\Insight.Database.snk" } //"keyFile": "..\\Insight.Database.snk"
 }

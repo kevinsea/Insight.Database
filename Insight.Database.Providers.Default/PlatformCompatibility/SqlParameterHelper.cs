@@ -19,22 +19,29 @@ namespace Insight.Database.Providers.Default.PlatformCompatibility
 			AssertCommandIsValid(cmdToPopulate, "DeriveParameters");
 			AssertConnectionIsValid(cmdToPopulate);
 
-			SqlDataReader parameterReader = GetParametersAsReader(cmdToPopulate);
-
-			var columnMap = new ParameterColumnMap(parameterReader);
 			var newParameters = new List<SqlParameter>();
 
-			while (parameterReader.Read())
+			var procToPopulateName = new SqlObjectName(cmdToPopulate.CommandText);
+			var parameterRequestProc = new SqlObjectName(procToPopulateName.Database, "sys", "sp_procedure_params_100_managed");
+
+			var parameterRequestCmd = new SqlCommand(parameterRequestProc.Name, cmdToPopulate.Connection, cmdToPopulate.Transaction);
+			parameterRequestCmd.CommandType = CommandType.StoredProcedure;
+			parameterRequestCmd.Parameters.Add(CreateNVarCharParameter("@procedure_name", procToPopulateName.Name));
+
+			if (!procToPopulateName.Schema.IsNullOrWhiteSpace())
+				parameterRequestCmd.Parameters.Add(CreateNVarCharParameter("@procedure_schema", procToPopulateName.Schema));
+
+			using (SqlDataReader parameterReader = parameterRequestCmd.ExecuteReader())
 			{
-				SqlParameter parameter = CreateParameter(parameterReader, columnMap);
-				newParameters.Add(parameter);
+				var columnMap = new ParameterColumnMap(parameterReader);
+
+				while (parameterReader.Read())
+				{
+					SqlParameter parameter = CreateParameter(parameterReader, columnMap);
+					newParameters.Add(parameter);
+				}
 			}
 
-#if !NETCORE  // This should be a using section or a .Dispose here, but safe change is:
-				parameterReader.Close();
-#else
-				((IDataReader)parameterReader).Close();
-#endif
 			if (newParameters.Count == 0)
 				throw new InvalidOperationException($"The stored procedure '{cmdToPopulate.CommandText}' doesn't exist.");
 

@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using Insight.Database;
+using Insight.Tests.PlatformCompatibility;
 using NUnit.Framework;
 
 #pragma warning disable 0649

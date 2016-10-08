@@ -7,8 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Insight.Database;
 using Insight.Tests.Cases;
-using Microsoft.SqlServer.Types;
+using Insight.Tests.PlatformCompatibility;
 using NUnit.Framework;
+
+#if !NETCORE
+using Microsoft.SqlServer.Types;
+#endif
 
 #pragma warning disable 0649
 
@@ -26,7 +30,7 @@ namespace Insight.Tests
 			DbSerializationRule.ResetRules();
 		}
 
-		#region Table Tests
+#region Table Tests
 		[Test]
 		public void RegexReplaceShouldAlterColumnName()
 		{
@@ -70,9 +74,9 @@ namespace Insight.Tests
 			var results = Connection().QuerySql<ParentTestData, TestData>(sql);
 			ParentTestData.Verify(results);
 		}
-		#endregion
+#endregion
 
-		#region Output Parameter Tests
+#region Output Parameter Tests
 		class OutputParameters
 		{
 			public int out_foo;
@@ -89,9 +93,9 @@ namespace Insight.Tests
 			Assert.AreEqual(0, output.out_foo);
 			Assert.AreEqual(5, output.foo);
 		}
-		#endregion
+#endregion
 
-		#region Serialization Tests
+#region Serialization Tests
 		public class JsonClass
 		{
 			[Column(SerializationMode = SerializationMode.Json)]
@@ -153,9 +157,9 @@ namespace Insight.Tests
 			Assert.IsFalse(Connection().Single<string>("MappingAsJson4", input).StartsWith("<MappingTests."));
 		}
 #endif
-		#endregion
+#endregion
 
-		#region Multiple Level Mapping Tests
+#region Multiple Level Mapping Tests
 		public class FlattenedParameters
 		{
 			public int Y1;
@@ -389,9 +393,9 @@ namespace Insight.Tests
 			Assert.AreEqual(parent.X, result.X);
 			Assert.AreEqual(parent.Child.Z, result.Child.Z);
 		}
-		#endregion
+#endregion
 
-		#region Test for Issue #156
+#region Test for Issue #156
 		public class BaseForRenaming
 		{
 			public virtual string RenamedInDerived { get; set; }
@@ -413,9 +417,9 @@ namespace Insight.Tests
 			Assert.AreEqual("derived", result.RenamedInDerived);
 			Assert.AreEqual("base", result.RenamedInBase);
 		}
-		#endregion
+#endregion
 
-		#region "Object Access tests"
+#region "Object Access tests"
 
 		// Test access levels for an auto implemented repo interface
 		// Note that this project allows Insight.Database access to its internals (InternalsVisibleTo)
@@ -477,7 +481,7 @@ namespace Insight.Tests
 			public abstract IList<String> GetOneFooString();
 		}
 
-		#endregion
+#endregion
 	}
 
 	/// <summary>
@@ -486,15 +490,15 @@ namespace Insight.Tests
 	[TestFixture]
 	public class MappingProcTests : BaseTest
 	{
-		#region SetUp and TearDown
+#region SetUp and TearDown
 		[TearDown]
 		public void TearDownFixture()
 		{
 			ColumnMapping.Tables.ResetTransforms();
 		}
-		#endregion
+#endregion
 
-		#region Table Valued Parameter Tests
+#region Table Valued Parameter Tests
 		[Test]
 		public void MappingsAreAppliedToTableValuedParameters()
 		{
@@ -529,9 +533,9 @@ namespace Insight.Tests
 			Assert.AreEqual(original.ParentX, results.ParentX);
 			Assert.AreEqual(original.X, results.X);
 		}
-		#endregion
+#endregion
 
-		#region BulkCopy Tests
+#region BulkCopy Tests
 		[Test]
 		public void MappingsAreAppliedToBulkCopy()
 		{
@@ -556,7 +560,7 @@ namespace Insight.Tests
 					Assert.AreEqual(j, items[j].ParentX);
 			}
 		}
-		#endregion
+#endregion
 
 		[Test]
 		public void MappingsAreAppliedToParameters()
@@ -571,7 +575,9 @@ namespace Insight.Tests
 			Assert.AreEqual(parentTestData.ParentX, data);
 		}
 
-		#region Geography Tests
+#region Geography Tests
+
+#if !NETCORE
 		class TestGeography
 		{
 			public SqlGeography Geo;
@@ -599,6 +605,8 @@ namespace Insight.Tests
 			var dynamicList = Connection().Query("MappingTestProcGeography", new { geo = point });
 			Assert.That(results[0].STEquals(point).IsTrue);
 		}
-		#endregion
+#endif
+
+#endregion
 	}
 }

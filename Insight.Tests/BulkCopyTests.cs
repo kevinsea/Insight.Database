@@ -1,10 +1,15 @@
-﻿using System;
+﻿
+#if !NETCORE666
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.SqlClient;
 using System.Data;
+#if !NETCORE
 using Microsoft.SqlServer.Types;
+#endif
 using NUnit.Framework;
 using Insight.Database;
 
@@ -14,7 +19,11 @@ namespace Insight.Tests
 	class BulkCopyTests : BaseTest
 	{
 		#region SetUp and TearDown
+#if NETCORE
+		[OneTimeSetUp]
+#else
 		[SetUp]
+#endif
 		public void SetUp()
 		{
 			Cleanup();
@@ -31,10 +40,13 @@ namespace Insight.Tests
 		{
 			public int Int;
 			public int? IntNull { get; set; }
+#if !NETCORE
 			public SqlGeometry Geometry;
+#endif
 		}
 		#endregion
 
+#if !NETCORE
 		[Test]
 		public void TestBulkLoad()
 		{
@@ -74,27 +86,28 @@ namespace Insight.Tests
 				VerifyRecordsInserted(connection, i);
 			}
 		}
+#endif
 
-        [Test]
-        public void TestBulkLoadCount()
-        {
+		[Test]
+		public void TestBulkLoadCount()
+		{
 			var connection = Connection();
-			
-			const int RowCount = 3;
-            for (int i = 0; i < RowCount; i++)
-            {
-                // build test data
-                InsightTestData[] array = new InsightTestData[i];
-                for (int j = 0; j < i; j++)
-                    array[j] = new InsightTestData() { Int = j };
 
-                // bulk load the data
+			const int RowCount = 3;
+			for (int i = 0; i < RowCount; i++)
+			{
+				// build test data
+				InsightTestData[] array = new InsightTestData[i];
+				for (int j = 0; j < i; j++)
+					array[j] = new InsightTestData() { Int = j };
+
+				// bulk load the data
 				Cleanup();
 				var count = connection.BulkCopy("BulkCopyData", array);
 
-                Assert.AreEqual(i, count);
-            }
-        }
+				Assert.AreEqual(i, count);
+			}
+		}
 
 		[Test]
 		public void TestBulkLoadWithConfiguration()
@@ -235,15 +248,15 @@ namespace Insight.Tests
 			}
 		}
 
-        public interface ICanBulkCopy : IDbConnection, IDbTransaction
-        {
-            [Sql("SELECT X=1")]
-            int MyProc();
-        }
+		public interface ICanBulkCopy : IDbConnection, IDbTransaction
+		{
+			[Sql("SELECT X=1")]
+			int MyProc();
+		}
 
-        [Test]
-        public void TestBulkCopyWithInterface()
-        {
+		[Test]
+		public void TestBulkCopyWithInterface()
+		{
 			const int ItemCount = 10;
 
 			// build test data
@@ -251,43 +264,45 @@ namespace Insight.Tests
 			for (int j = 0; j < ItemCount; j++)
 				array[j] = new InsightTestData() { Int = j };
 
-            using (var i = Connection().OpenWithTransactionAs<ICanBulkCopy>())
-            {
-                i.BulkCopy("BulkCopyData", array);
-            }
-        }
+			using (var i = Connection().OpenWithTransactionAs<ICanBulkCopy>())
+			{
+				i.BulkCopy("BulkCopyData", array);
+			}
+		}
 
-        #region Tests for Issue 162
-        public class BulkCopyDataWithComputedColumn
-        {
-            public int Int1;
-            public int Computed;
-            public int Int2;
-        }
+		#region Tests for Issue 162
+		public class BulkCopyDataWithComputedColumn
+		{
+			public int Int1;
+			public int Computed;
+			public int Int2;
+		}
 
-        [Test]
-        public void TestBulkCopyWithComputedColumn()
-        {
-            var array = new BulkCopyDataWithComputedColumn[1]
-            {
-                new BulkCopyDataWithComputedColumn()
-                {
-                    Int1 = 1,
-                    Computed = 0,
-                    Int2 = 3
-                }
-            };
+		[Test]
+		public void TestBulkCopyWithComputedColumn()
+		{
+			var array = new BulkCopyDataWithComputedColumn[1]
+			{
+				new BulkCopyDataWithComputedColumn()
+				{
+					Int1 = 1,
+					Computed = 0,
+					Int2 = 3
+				}
+			};
 
-            using (var i = Connection().OpenWithTransaction())
-            {
-                i.BulkCopy("BulkCopyWithComputedData", array);
+			using (var i = Connection().OpenWithTransaction())
+			{
+				i.BulkCopy("BulkCopyWithComputedData", array);
 
-                var inserted = i.QuerySql<BulkCopyDataWithComputedColumn>("SELECT * FROM BulkCopyWithComputedData").First();
-                Assert.AreEqual(array[0].Int1, inserted.Int1);
-                Assert.AreEqual(array[0].Int2, inserted.Int2);
-                Assert.AreEqual(array[0].Int1 + 1, inserted.Computed);
-            }
-        }
-        #endregion
-    }
+				var inserted = i.QuerySql<BulkCopyDataWithComputedColumn>("SELECT * FROM BulkCopyWithComputedData").First();
+				Assert.AreEqual(array[0].Int1, inserted.Int1);
+				Assert.AreEqual(array[0].Int2, inserted.Int2);
+				Assert.AreEqual(array[0].Int1 + 1, inserted.Computed);
+			}
+		}
+		#endregion
+	}
 }
+
+#endif

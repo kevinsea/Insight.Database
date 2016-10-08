@@ -11,6 +11,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.Common;
 
+#if NETCORE
+using Insight.Tests.PlatformCompatibility;
+#else
+using System.Configuration;
+#endif
+
 #pragma warning disable 0649
 
 namespace Insight.Tests
@@ -187,6 +193,7 @@ namespace Insight.Tests
 			TestData2.Verify(results.Set2);
 		}
 
+#if !NETCORE
 		/// <summary>
 		/// Tests GitHub Issue #41 - ReliableConnection was not being disposed properly.
 		/// </summary>
@@ -200,12 +207,13 @@ namespace Insight.Tests
 		{
 			for (int i = 0; i < count; i++)
 			{
-				System.Configuration.ConfigurationManager.ConnectionStrings["Test"]
+				ConfigurationManager.ConnectionStrings["Test"]
 					.ReliableDynamic<int>()
 					.ReflectInt32TableAsync(new List<int>() { 5, 7 })
 					.Wait();
 			}
 		}
+#endif
 
 		/// <summary>
 		/// Tests GitHub Issue #13
@@ -245,7 +253,7 @@ namespace Insight.Tests
 			);
 		}
 
-		#region Dynamic Proc with Table Parameters
+#region Dynamic Proc with Table Parameters
 		public class DynamicTableType
 		{
 			public int Value;
@@ -261,7 +269,7 @@ namespace Insight.Tests
 			Assert.AreEqual(1, results.Count);
 			Assert.AreEqual(9, results[0].Value);
 		}
-		#endregion
+#endregion
 	}
 }
 #endif

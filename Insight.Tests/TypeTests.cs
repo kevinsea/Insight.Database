@@ -8,8 +8,11 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 using Insight.Database;
-using Microsoft.SqlServer.Types;
 using NUnit.Framework;
+
+#if !NETCORE
+using Microsoft.SqlServer.Types;
+#endif
 
 #pragma warning disable 0649
 
@@ -18,7 +21,7 @@ namespace Insight.Tests
 	[TestFixture]
 	public class TypeTests : BaseTest
 	{
-		#region Helper Classes
+#region Helper Classes
 		/// <summary>
 		/// A test enum
 		/// </summary>
@@ -175,9 +178,9 @@ namespace Insight.Tests
 				}
 			}
 		}
-		#endregion
+#endregion
 
-		#region Type Tests
+#region Type Tests
 		/// <summary>
 		/// Test support for all of the types in/out of the database.
 		/// </summary>
@@ -207,7 +210,11 @@ namespace Insight.Tests
 			// class types
 			Data<string>.Test("foo", _connection, "varchar(128)");
 			Data<byte[]>.Test(new byte[] { 1, 2, 3, 4 }, _connection, "varbinary(MAX)");
+
+
+#if !NETCORE  // System.Data.Linq.Binary does not exist for Core
 			Data<System.Data.Linq.Binary>.Test(new System.Data.Linq.Binary(new byte[] { 1, 2, 3, 4 }), _connection, "varbinary(MAX)");
+#endif
 
 			// enums
 			NullableData<TestEnum>.Test(TestEnum.Two, _connection, "int");
@@ -220,9 +227,9 @@ namespace Insight.Tests
 		}
 
 		class TestData { public int P; }
-		#endregion
+#endregion
 
-		#region Single Column Tests
+#region Single Column Tests
 		[Test]
 		public void TestVarBinaryMaxAsSingleColumn()
 		{
@@ -235,9 +242,9 @@ namespace Insight.Tests
 		{
 			var results = Connection().QuerySql<int>("SELECT 1234");
 		}
-		#endregion
+#endregion
 
-		#region Type Coersion Tests
+#region Type Coersion Tests
 		[Test]
 		public void TypeCoersions()
 		{
@@ -420,10 +427,10 @@ namespace Insight.Tests
 		{
 			One = 1
 		}
-		#endregion
+#endregion
 
-		#region Class/Struct Field Deserialization Tests
-		#region Class By Constructor
+#region Class/Struct Field Deserialization Tests
+#region Class By Constructor
 		class FooID
 		{
 			public int Value;
@@ -489,9 +496,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, data[0].ID.Value);
 			Assert.AreEqual("goo", data[0].Name);
 		}
-		#endregion
+#endregion
 
-		#region Type Tests for Conversion by Constructor
+#region Type Tests for Conversion by Constructor
 		public class ID<T>
 		{
 			public T Value;
@@ -539,9 +546,9 @@ namespace Insight.Tests
 
 			// note: char is not compatible with string
 		}
-		#endregion
+#endregion
 
-		#region Class By Conversion Operator
+#region Class By Conversion Operator
 		class FooByConversionID
 		{
 			public int Value;
@@ -567,9 +574,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, data[0].ID.Value);
 			Assert.AreEqual("foo", data[0].Name);
 		}
-		#endregion
+#endregion
 
-		#region Struct By Constructor
+#region Struct By Constructor
 		struct FooStructID
 		{
 			public int Value;
@@ -595,9 +602,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, data[0].ID.Value);
 			Assert.AreEqual("foo", data[0].Name);
 		}
-		#endregion
+#endregion
 
-		#region Struct By Conversion
+#region Struct By Conversion
 		struct FooStructByConversionID
 		{
 			public int Value;
@@ -623,9 +630,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, data[0].ID.Value);
 			Assert.AreEqual("foo", data[0].Name);
 		}
-		#endregion
+#endregion
 
-		#region ParameterByIConvertible
+#region ParameterByIConvertible
 		class FooConvertibleID : IConvertible
 		{
 			public int Value;
@@ -750,9 +757,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, data[0].ID.Value);
 			Assert.AreEqual("goo", data[0].Name);
 		}
-		#endregion
+#endregion
 
-		#region NullableValueParameterByToString
+#region NullableValueParameterByToString
 		class FooNullableID
 		{
 			public int? Value;
@@ -821,9 +828,9 @@ namespace Insight.Tests
 			Assert.IsNull(data[0].ID);
 			Assert.AreEqual("goo", data[0].Name);
 		}
-		#endregion
+#endregion
 
-		#region Set Members on a Struct
+#region Set Members on a Struct
 		struct TestStruct
 		{
 			public int Foo { get; private set; }
@@ -847,10 +854,10 @@ namespace Insight.Tests
 			var results = Connection().QuerySql<TestParentStruct, TestStruct>("SELECT Foo = 4");
 			Assert.AreEqual(4, results[0].Struct.Foo);
 		}
-		#endregion
-		#endregion
+#endregion
+#endregion
 
-		#region TimeSpan Tests
+#region TimeSpan Tests
 		[Test]
 		public void TimeSpanShouldConvertProperlyToSqlTime()
 		{
@@ -909,9 +916,9 @@ namespace Insight.Tests
 			var time = Connection().ExecuteScalar<DateTime>("TimeAdd2", new { t = now, add = oneHour });
 			Assert.AreEqual(now + oneHour, time);
 		}
-		#endregion
+#endregion
 
-		#region Date Tests
+#region Date Tests
 		[Test]
 		public void DateFieldsShouldConvertProperly()
 		{
@@ -941,9 +948,9 @@ namespace Insight.Tests
 			var results = Connection().Query<DateTime>("TestDateTime2", new { date = d }).First();
 			Assert.AreEqual(d, results);
 		}
-		#endregion
+#endregion
 
-		#region Guid Tests
+#region Guid Tests
 		[Test]
 		public void GuidsShouldConvertFromString()
 		{
@@ -997,9 +1004,13 @@ namespace Insight.Tests
 			var results = Connection().Query<Guid>("TestGuidToStringParam", new { p = g }).First();
 			Assert.AreEqual(Guid.Empty, results);
 		}
-		#endregion
+#endregion
 
-		#region SqlGeometry Tests
+
+#if !NETCORE
+
+#region SqlGeometry Tests
+
 		public interface ITestGeometry
 		{
 			[Sql("GeometryProc", CommandType.StoredProcedure)]
@@ -1024,9 +1035,10 @@ namespace Insight.Tests
 			var result2 = i.GeometrySql(geo);
 			Assert.AreEqual(geo.ToString(), result2.First().ToString());
 		}
-		#endregion
 
-		#region SqlHierarchyTests
+#endregion
+
+#region SqlHierarchyTests
 		public class HierarchyModel
 		{
 			public int Id;
@@ -1041,6 +1053,9 @@ namespace Insight.Tests
 		{
 			var results = Connection().QuerySql<HierarchyModel>("SELECT ID=1, Hierarchy=CAST('/1/' AS hierarchyid)").FirstOrDefault();
 		}
-		#endregion
+#endregion
+
+#endif
+
 	}
 }

@@ -110,6 +110,11 @@ namespace Insight.Database
 		/// <inheritdoc/>
 		public override void Close()
 		{
+#if NETCORE  // TODO its unclear why this is only needed for NETCORE as the parent class does the same
+			// Perhaps due to the currently sloppy way I'm getting the right provider (hardcoded for Core)
+			if (InnerConnection == null)
+				return;
+#endif
 			InnerConnection.Close();
 		}
 
@@ -223,7 +228,7 @@ namespace Insight.Database
 				return (DbProviderFactory)type.GetField("Instance").GetValue(null);
 			}
 		}
-#endif
+#endif  // !NETCORE
 
 		#endregion
 

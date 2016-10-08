@@ -10,15 +10,12 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 {
 	public interface IColumnSchema
 	{
+		string ColumnName { get; }
 		Type DataType { get; }
 		string DataTypeName { get; }
-
-		string ColumnName { get; }
-		int ColumnOrdinal { get; set; }
-
 		bool IsReadOnly { get; }
 		bool IsIdentity { get; }
-
+		bool IsNullable { get; }
 		int? NumericScale { get; set; }
 	}
 

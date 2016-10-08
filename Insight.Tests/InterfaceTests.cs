@@ -7,10 +7,16 @@ using NUnit.Framework;
 using Insight.Database;
 using System.Data.Common;
 using System.Data;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Insight.Tests.Cases;
 using Insight.Database.Reliable;
+using Insight.Tests.PlatformCompatibility;
+
+#if !NETCORE
+using System.Configuration;
+#endif
 
 // since the interface and types are private, we have to let insight have access to them
 [assembly: InternalsVisibleTo("Insight.Database")]
@@ -291,18 +297,24 @@ namespace Insight.Tests
 #endif
 		}
 
+
 		public void TryInterfaceCall(int count)
 		{
 			for (int i = 0; i < count; i++)
 			{
-				System.Configuration.ConfigurationManager.ConnectionStrings["Test"]
-					.As <ITest1>()
-					.ExecuteSomething();
+#if NETCORE
+				var repo = Connection().OpenAs<ITest1>();
+#else
+				var repo = ConfigurationManager.ConnectionStrings["Test"].As<ITest1>();
+#endif
+				repo.ExecuteSomething();
 			}
 		}
-		#endregion
 
-		#region Test Output Parameters
+
+#endregion
+
+#region Test Output Parameters
 		[Test]
 		public void TestOutputParameters()
 		{
@@ -342,9 +354,9 @@ namespace Insight.Tests
 				Assert.AreEqual(original + 1, p);
 			}
 		}
-		#endregion
+#endregion
 
-		#region List Return Tests
+#region List Return Tests
 		public interface IReturnItems
 		{
 			[Sql("SELECT 1 UNION SELECT 2")] IEnumerable<int> QueryEnumerable();
@@ -470,9 +482,9 @@ namespace Insight.Tests
 				Assert.AreEqual(0, result.Count());
 			}
 		}
-		#endregion
+#endregion
 
-		#region Schema Tests
+#region Schema Tests
 		[Sql(Schema="MySchema")]
 		public interface IBeerRepositoryWithSchema
 		{
@@ -485,9 +497,9 @@ namespace Insight.Tests
 		{
 			Connection().As<IBeerRepositoryWithSchema>().InsertBeer(1);
 		}
-		#endregion
+#endregion
 
-		#region Structure Tests
+#region Structure Tests
 		internal interface IHaveStructure
 		{
 			[Sql("SELECT ID=1, ID=2")]
@@ -744,9 +756,9 @@ namespace Insight.Tests
 			Assert.AreEqual(1, beer.ID);
 			Assert.AreEqual(0, beer.List.Count);
 		}
-		#endregion
+#endregion
 
-		#region Inheritance Tests
+#region Inheritance Tests
 		[Test]
 		public void TestInheritedInterface()
 		{
@@ -761,7 +773,7 @@ namespace Insight.Tests
 			Assert.AreEqual("base", i.Base());
 			Assert.AreEqual("derived", i.Derived());
 		}
-		#endregion
+#endregion
 
 		[Test]
 		public void TestMergeOutputAttribute()
@@ -774,7 +786,7 @@ namespace Insight.Tests
 			Assert.AreEqual(6, data.Z);
 		}
 
-		#region TVP Test
+#region TVP Test
 		public interface IHaveTVPWithSQL
 		{
 			[Sql("SELECT * FROM dbo.ReflectTableFunction(@p)")]
@@ -799,9 +811,9 @@ namespace Insight.Tests
 			result = i.ReflectBeer2(beer, 2);
 			Assert.AreEqual(1, result.Count());
 		}
-		#endregion
+#endregion
 
-		#region Friendly Error Message Test
+#region Friendly Error Message Test
 		interface IAmAPrivateInterface
 		{
 		}
@@ -811,9 +823,9 @@ namespace Insight.Tests
 		{
 			Connection().As<IAmAPrivateInterface>();
 		}
-		#endregion
+#endregion
 
-		#region DynamicAssembly Test
+#region DynamicAssembly Test
         [Test]
         public void InterfacesShouldBeInSameAssembly()
         {
@@ -824,11 +836,11 @@ namespace Insight.Tests
             var i1 = Connection().As<ITest1>();
             var i2 = Connection().As<ITestInsertUpdate>();
 
-			Assert.AreEqual(i1.GetType().Assembly, i2.GetType().Assembly);
+			Assert.AreEqual(i1.GetType().GetTypeInfo().Assembly, i2.GetType().GetTypeInfo().Assembly);
         }
-		#endregion
+#endregion
 
-		#region Ambiguous Match Test
+#region Ambiguous Match Test
 		public interface IHaveAmbiguousMatch
 		{
 			// this method had a conflict with the create method that converts a connection to an interface
@@ -840,10 +852,10 @@ namespace Insight.Tests
 		{
 			var c = Connection().As<IHaveAmbiguousMatch>();
 		}
-		#endregion
+#endregion
 	}
 
-	#region Interface Update Tests
+#region Interface Update Tests
 	[TestFixture]
 	public class InterfaceUpdateTests : BaseTest
 	{
@@ -869,9 +881,9 @@ namespace Insight.Tests
 			repo.UpsertByT<string>("");
 		}
 	}
-	#endregion
+#endregion
 
-	#region Multi-Threaded Interface Tests
+#region Multi-Threaded Interface Tests
 #if !NODBASYNC
 	interface IMultiThreaded
 	{
@@ -908,9 +920,9 @@ namespace Insight.Tests
 		}
 	}
 #endif
-	#endregion
+#endregion
 
-	#region Abstract Class Implementation Tests
+#region Abstract Class Implementation Tests
 	public abstract class AbstractClass
 	{
 		[Sql("SELECT 'abstract'")]
@@ -1074,7 +1086,7 @@ namespace Insight.Tests
 			Assert.Throws<InvalidOperationException>(() => connection.AsParallel<AbstractClassWithNonDefaultConstructor>());
 		}
 	}
-	#endregion
+#endregion
 
 	public interface IDontReturnAScalar
 	{
@@ -1112,7 +1124,7 @@ namespace Insight.Tests
 		}
 	}
 
-    #region Interface Transaction Tests
+#region Interface Transaction Tests
     [TestFixture]
     public class InterfaceTransactionsTest : BaseTest
     {
@@ -1139,9 +1151,9 @@ namespace Insight.Tests
             }
         }
     }
-    #endregion  
+#endregion
 
-    #region Parameter Tests
+#region Parameter Tests
     [TestFixture]
     public class ParameterWithAttributeTest : BaseTest
     {
@@ -1158,5 +1170,5 @@ namespace Insight.Tests
             Assert.AreEqual(5, p);
         }
     }
-    #endregion
+#endregion
 }

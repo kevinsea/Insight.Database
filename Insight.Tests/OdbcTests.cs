@@ -2,10 +2,15 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+#if NETCORE  // TODO ODBC support and test
+// using Insight.Tests.PlatformCompatibility;
+#else
+using System.Configuration;
+
 
 namespace Insight.Tests
 {
@@ -31,3 +36,5 @@ namespace Insight.Tests
 #endif
     }
 }
+
+#endif

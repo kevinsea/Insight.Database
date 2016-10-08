@@ -1,0 +1,32 @@
+﻿{
+	"version": "1.0.0-*",
+	"buildOptions": {
+		"emitEntryPoint": false
+	},
+	"testRunner": "nunit",
+	"frameworks": {
+		"netcoreapp1.0": {
+			"imports": "dnxcore50",
+			"dependencies": {
+				"Microsoft.NETCore.App": {
+					"type": "platform",
+					"version": "1.0.1"
+				},
+				"System.Data.SqlClient": "4.1.0",
+				"System.Linq": "4.1.0",
+				"System.Diagnostics.Debug": "4.0.11",
+				"Insight.Database": "1.0.0-*",
+				"Insight.Database.Providers.Default": "1.0.0-*",
+				"NUnit": "3.4.1",
+				"dotnet-test-nunit": "3.4.0-beta-2"
+			},
+			"buildOptions": {
+				"define": [ "NETCORE", "ROSLYN", "COREHACK" ]
+			}
+		}
+		//,  // Enable this on when using the non .Net Core solution (.cs projects)
+		//"NET45": {	}
+		//}
+	},
+	"runtimes": { "win": {} }
+}

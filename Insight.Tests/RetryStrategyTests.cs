@@ -1,4 +1,4 @@
-﻿#if !NET35
+﻿#if !NET35 && !NETCORE
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +24,11 @@ namespace Insight.Tests
 		private RetryStrategy RetryStrategy { get { return _mockRetryStrategy.Object; } }
 		private int Retries;
 
+#if NETCORE
+		[OneTimeSetUp]
+#else
 		[SetUp]
+#endif
 		public void SetUp()
 		{
 			Retries = 0;
@@ -41,7 +45,7 @@ namespace Insight.Tests
 			RetryStrategy.MaxBackOff = new TimeSpan(0, 0, 0, 0, 10);
 		}
 
-		#region Pure RetryStrategy Tests
+#region Pure RetryStrategy Tests
 		[Test]
 		public void RetryStrategyShouldCompleteWhenFuncReturnsNullTask()
 		{
@@ -72,12 +76,11 @@ namespace Insight.Tests
 			RetryStrategy s = new RetryStrategy();
 
 			s.Retrying += (sender, re) => { throw new ApplicationException(); };
-
 			Assert.Throws<AggregateException>(() => s.ExecuteWithRetryAsync<int>(null, () => Task<int>.Factory.StartNew(() => { throw new ApplicationException(); })).Wait());
 		}
-		#endregion
+#endregion
 
-		#region IsTransientException Tests
+#region IsTransientException Tests
 		[Test]
 		public void NonTransientExceptionDoesNotRetry()
 		{
@@ -118,9 +121,9 @@ namespace Insight.Tests
 
 			Assert.IsTrue(Retries > 0);
 		}
-		#endregion
+#endregion
 
-		#region Parameter Tests
+#region Parameter Tests
 		[Test]
 		public void MaxRetryCountCapsNumberOfRetries()
 		{
@@ -143,9 +146,9 @@ namespace Insight.Tests
 
 			Assert.AreEqual(5, retries);
 		}
-		#endregion
+#endregion
 
-		#region Tests for Successful Queries
+#region Tests for Successful Queries
 		[Test]
 		public void StoredProcedureParametersDetectedWithReliableSqlConnection()
 		{
@@ -181,9 +184,9 @@ namespace Insight.Tests
 				Assert.AreEqual(5, result.Count());
 			}
 		}
-		#endregion
+#endregion
 
-		#region Async Retry Tests
+#region Async Retry Tests
 		[Test]
 		public void AsyncBadOpenPerformsRetry()
 		{
@@ -234,9 +237,9 @@ namespace Insight.Tests
 
 			Assert.AreEqual(10, result);
 		}
-		#endregion
+#endregion
 
-		#region Tests for Bad Exceptions
+#region Tests for Bad Exceptions
 		[Test]
 		public void InvalidExceptionShouldNotBeTransient()
 		{
@@ -245,9 +248,9 @@ namespace Insight.Tests
 			RetryStrategy retry = new RetryStrategy();
 			Assert.IsFalse(retry.IsTransientException(new InvalidOperationException()));
 		}
-		#endregion
+#endregion
 
-        #region Transaction Tests
+#region Transaction Tests
         [Test]
         public void ReliableShouldWorkWithTransaction()
         {
@@ -257,7 +260,7 @@ namespace Insight.Tests
                 var ret = conn.QuerySql(@"SELECT 1");
             }
         }
-        #endregion
+#endregion
     }
 }
 #endif

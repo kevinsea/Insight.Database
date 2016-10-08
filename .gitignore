@@ -17,3 +17,6 @@ _ReSharper*/
 *.[Rr]e[Ss]harper
 
 .vagrant
+/.vs/config/applicationhost.config
+/Insight.Database.Providers.Default/project.lock.json
+/Insight.Tests/project.lock.json
