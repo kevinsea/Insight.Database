@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 
 namespace Insight.Database.PlatformCompatibility
 {
+	/// <summary>Platform compatiblity for Reflection</summary>
 	internal class ReflectionHelpers
 	{
 		internal static ModuleBuilder CreateDynamicModule()
@@ -21,17 +22,17 @@ namespace Insight.Database.PlatformCompatibility
 			// Make the dynamic assembly have a unique name.  Fixes debugger issue #224.  
 			an.Name = an.Name + ".DynamicAssembly";
 
-			AssemblyBuilder ab = ReflectionHelpers.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+			AssemblyBuilder ab = ReflectionHelpers.DefineDynamicAssembly(an);
 
 			ModuleBuilder builder = ab.DefineDynamicModule(an.Name);
 			return builder;
 		}
 
-		private static AssemblyBuilder DefineDynamicAssembly(AssemblyName assemblyNameClass, AssemblyBuilderAccess assemblyBuilderAccess)
+		private static AssemblyBuilder DefineDynamicAssembly(AssemblyName assemblyNameClass)
 		{
 
 #if NETCORE // && !COREONDESK
-			return AssemblyBuilder.DefineDynamicAssembly(assemblyNameClass, assemblyBuilderAccess);
+			return AssemblyBuilder.DefineDynamicAssembly(assemblyNameClass, AssemblyBuilderAccess.Run);
 #else
 			return AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyNameClass, AssemblyBuilderAccess.Run);
 #endif

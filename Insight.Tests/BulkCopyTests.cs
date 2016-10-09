@@ -86,7 +86,6 @@ namespace Insight.Tests
 				VerifyRecordsInserted(connection, i);
 			}
 		}
-#endif
 
 		[Test]
 		public void TestBulkLoadCount()
@@ -132,7 +131,9 @@ namespace Insight.Tests
 			VerifyRecordsInserted(connection, ItemCount);
 			Assert.AreEqual(ItemCount, totalRows);
 		}
+#endif
 
+#if !NETCORE // TODO - Core: There is a Geometry column - use separate table for Core?
 		[Test]
 		public void TestBulkLoadWithAutoTransaction()
 		{
@@ -187,6 +188,7 @@ namespace Insight.Tests
 				}
 			}
 		}
+#endif
 
 		private void VerifyRecordsInserted(IDbConnection connection, int count, IDbTransaction transaction = null)
 		{
@@ -254,6 +256,7 @@ namespace Insight.Tests
 			int MyProc();
 		}
 
+#if !NETCORE // TODO - Core: There is a Geometry column - use separate table for Core?
 		[Test]
 		public void TestBulkCopyWithInterface()
 		{
@@ -269,6 +272,7 @@ namespace Insight.Tests
 				i.BulkCopy("BulkCopyData", array);
 			}
 		}
+#endif
 
 		#region Tests for Issue 162
 		public class BulkCopyDataWithComputedColumn

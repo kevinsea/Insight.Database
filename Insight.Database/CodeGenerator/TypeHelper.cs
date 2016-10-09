@@ -26,6 +26,10 @@ namespace Insight.Database.CodeGenerator
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
 		static TypeHelper()
 		{
+
+#if NETCORE
+			LinqBinaryType = typeof(LinqBinaryPlaceHolder);
+#else
 			try
 			{
 				var assemblyName = new AssemblyName("System.Data.Linq, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
@@ -35,7 +39,7 @@ namespace Insight.Database.CodeGenerator
 			{
 				LinqBinaryType = typeof(LinqBinaryPlaceHolder);
 			}
-
+#endif
 			LinqBinaryCtor = LinqBinaryType.GetConstructor(new Type[] { typeof(byte[]) });
 			LinqBinaryToArray = LinqBinaryType.GetMethod("ToArray", BindingFlags.Public | BindingFlags.Instance);
 		}
@@ -147,7 +151,7 @@ namespace Insight.Database.CodeGenerator
 			return type.GetTypeInfo().GetCustomAttributes(true).Any(a => a.GetType().GetTypeInfo().Name == "SqlUserDefinedTypeAttribute");
 		}
 
-		#region Method Implementation Helpers
+#region Method Implementation Helpers
 		/// <summary>
 		/// Copy the generic attributes of a method.
 		/// </summary>
@@ -196,15 +200,15 @@ namespace Insight.Database.CodeGenerator
 				targetMethod.DefineParameter(i + 1, parameter.Attributes, parameter.Name);
 			}
 		}
-		#endregion
+#endregion
 
-		#region LinqBinaryPlaceHolder
+#region LinqBinaryPlaceHolder
 		/// <summary>
 		/// Stand-in for Linq.Binary
 		/// </summary>
 		class LinqBinaryPlaceHolder
 		{
 		}
-		#endregion
+#endregion
 	}
 }

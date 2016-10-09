@@ -26,7 +26,6 @@
 		}
 		//,  // Enable this on when using the non .Net Core solution (.cs projects)
 		//"NET45": {	}
-		//}
 	},
 	"runtimes": { "win": {} }
 }

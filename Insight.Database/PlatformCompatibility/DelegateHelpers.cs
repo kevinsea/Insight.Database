@@ -9,6 +9,8 @@ namespace Insight.Database.PlatformCompatibility
 {
 
 #if NETCORE
+
+	/// <summary>Platform compatiblity for Delegates</summary>
 	class DelegateHelpers
 	{
 		/// <summary>

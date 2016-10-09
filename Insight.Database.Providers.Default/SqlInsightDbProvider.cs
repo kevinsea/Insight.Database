@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
@@ -17,6 +18,7 @@ using Insight.Database.Providers;
 using Insight.Database.Providers.Default.PlatformCompatibility;
 using Insight.Database.PlatformCompatibility;
 using System.Reflection;
+using Insight.Database.PlatformCompatibility.DataReader;
 
 namespace Insight.Database
 {
@@ -220,7 +222,7 @@ namespace Insight.Database
 					},
 					CommandBehavior.Default));
 
-			// TODO NETCORE, this can't derive from DbDataReader?  // create the structured parameter
+			// TODO NETCORE: on Core this can't derive from DbDataReader  // replicate with the new stuff:
 			parameter.Value = new ObjectListDbDataReader(objectReader, list);
 		}
 
@@ -247,6 +249,7 @@ namespace Insight.Database
 			return String.Format(CultureInfo.InvariantCulture, "SELECT TOP 0 * FROM {0}", tableName);
 		}
 
+#if !(NETCORE && !COREONDESK)
 		/// <summary>
 		/// Determines if the given column in the schema table is an XML column.
 		/// </summary>
@@ -255,14 +258,25 @@ namespace Insight.Database
 		/// <returns>True if the column is an XML column.</returns>
 		public override bool IsXmlColumn(DataTable schemaTable, int index)
 		{
-
-#if NETCORE //TODO DATATABLE 
-			return false;
-#else
 			if (schemaTable == null) throw new ArgumentNullException("schemaTable");
 			return ((Type)schemaTable.Rows[index]["ProviderSpecificDataType"]) == typeof(SqlXml);
-#endif
 		}
+
+#else
+		/// <summary>
+		/// Determines if the given column in the schema table is an XML column.
+		/// </summary>
+		/// <param name="reader">The reader to analyze.</param>
+		/// <param name="index">The index of the column.</param>
+		/// <returns>True if the column is an XML column.</returns>
+		public override bool IsXmlColumn(IDataReader reader, int index)
+		{
+			ReadOnlyCollection<DbColumn> schema = DataReaderHelpers.GetUnderlyingDbColumnSchema(reader);
+
+			DbColumn columnInfo = schema[index];
+			return columnInfo.DataTypeName == "xml";
+		}
+#endif
 
 		/// <summary>
 		/// Bulk copies a set of objects to the server.
@@ -285,6 +299,7 @@ namespace Insight.Database
 				bcp.BulkCopy.WriteToServer(reader);
 #else
 				var dbDataReader = reader as DbDataReader;
+
 				if (dbDataReader != null)
 					bcp.BulkCopy.WriteToServer(dbDataReader);
 				else  // TODO review the approach
@@ -514,6 +529,11 @@ namespace Insight.Database
 #if !NETCORE //TODO DATATABLE 
 				foreach (DataRow row in reader.GetSchemaTable().Rows)
 					bulk.ColumnMappings.Add((string)row["ColumnName"], (string)row["ColumnName"]);
+#else
+				IColumnSchemaProvider schema = DataReaderHelpers.GetColumnSchemaProvider(reader);
+
+				foreach (IColumnSchema columnInfo in schema.ToList())
+					bulk.ColumnMappings.Add(columnInfo.ColumnName, columnInfo.ColumnName);
 #endif
 				insightBulk = new SqlInsightBulkCopy(bulk);
 				bulk = null;

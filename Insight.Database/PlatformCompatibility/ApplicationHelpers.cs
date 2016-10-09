@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,6 +14,7 @@ using System.Runtime.Loader;
 
 namespace Insight.Database.PlatformCompatibility
 {
+	/// <summary>Platform compatiblity for Application and AppDomain</summary>
 	class ApplicationHelpers
 	{
 
@@ -29,6 +31,7 @@ namespace Insight.Database.PlatformCompatibility
 			return paths;
 		}
 
+		[SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom")]
 		internal static Assembly LoadAssemby(string assemblyFile)
 		{
 #if NETCORE && !COREONDESK

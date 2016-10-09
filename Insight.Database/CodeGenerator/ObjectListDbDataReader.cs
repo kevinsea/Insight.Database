@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
@@ -94,12 +95,12 @@ namespace Insight.Database.CodeGenerator
 		/// <returns>The schema table for the data.</returns>
 		public override DataTable GetSchemaTable()
 		{
-			var dataTableProvider = _objectReader.ColumnSchemaProvider as DataTableColumnSchemaProvider;
-
-			if(dataTableProvider != null)
-				return dataTableProvider.GetSchemaTable();
-			else
-				throw new NotImplementedException("Expected DataTableColumnSchemaProvider.");
+			return DataReaderHelpers.GetUnderlyingDataTable(_objectReader.ColumnSchemaProvider);
+		}
+#else
+		public override ReadOnlyCollection<DbColumn> GetColumnSchema()
+		{
+			return DataReaderHelpers.GetUnderlyingDbColumnSchema(_objectReader.ColumnSchemaProvider);
 		}
 #endif
 

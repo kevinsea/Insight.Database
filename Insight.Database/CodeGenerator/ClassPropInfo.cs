@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -50,6 +51,7 @@ namespace Insight.Database.CodeGenerator
 		/// </summary>
 		/// <param name="memberInfo">The member to represent.</param>
 		/// <param name="sourceType">The type this info comes from</param>
+		[SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "sourceType", Justification ="This is needed for .Net Core")]
 		private ClassPropInfo(MemberInfo memberInfo, Type sourceType)
 		{
 

@@ -303,7 +303,7 @@ namespace Insight.Tests
 			for (int i = 0; i < count; i++)
 			{
 #if NETCORE
-				var repo = Connection().OpenAs<ITest1>();
+				var repo = Connection().As<ITest1>();
 #else
 				var repo = ConfigurationManager.ConnectionStrings["Test"].As<ITest1>();
 #endif

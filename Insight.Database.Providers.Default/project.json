@@ -26,7 +26,7 @@
 				"System.Runtime.Serialization": "4.0"
 			},
 			"buildOptions": {
-				"define": [ "NETCORE", "COREONDESK", "COREGAPFILL" ]
+				"define": [ "NET45", "ROSLYN" ] //[ "NETCORE", "COREONDESK", "COREGAPFILL" ]
 			}
 		}
 	},

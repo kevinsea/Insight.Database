@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
@@ -21,6 +22,9 @@ namespace Insight.Database
 	[SuppressMessage("Microsoft.StyleCop.CSharp.OrderingRules", "SA1202:ElementsMustBeOrderedByAccess", Justification = "This class only implements certain members")]
 	[SuppressMessage("Microsoft.StyleCop.CSharp.OrderingRules", "SA1204:StaticElementsMustAppearBeforeInstanceElements", Justification = "This class only implements certain members")]
 	public abstract class DbDataReaderWrapper : DbDataReader
+#if NETCORE
+		, IDbColumnSchemaGenerator  // Support the .Net Core equivalent to get its schema
+#endif
 	{
 		/// <inheritdoc/>
 		public override bool GetBoolean(int i)
@@ -130,7 +134,7 @@ namespace Insight.Database
 			return new Guid(value.ToString());
 #else
 			return Guid.Parse(value.ToString());
-#endif		
+#endif
 		}
 
 		/// <inheritdoc/>
@@ -176,5 +180,18 @@ namespace Insight.Database
 		}
 
 		/// <inheritdoc/>
-		public override string GetDataTypeName(int ordinal)		{			var type = GetFieldType(ordinal);			if (type == null)				return "unmapped";			else				return type.Name;		}	}
+		public override string GetDataTypeName(int ordinal)
+		{
+			var type = GetFieldType(ordinal);
+			if (type == null)
+				return "unmapped";
+			else
+				return type.Name;
+		}
+
+#if NETCORE  // Support the .Net Core equivalent to get its schema
+		public abstract ReadOnlyCollection<DbColumn> GetColumnSchema();
+#endif
+
+	}
 }

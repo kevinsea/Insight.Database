@@ -11,6 +11,7 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 
 #if !(NETCORE && !COREONDESK)
 
+	/// <summary>Provides platform independent schema information for DataTables Schemas</summary>
 	internal class DataTableColumnSchemaProvider : ColumnSchemaProviderBase
 	{
 		private readonly DataTable _schemaTable;
@@ -25,13 +26,25 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 			_schemaTable.Columns["ColumnOrdinal"].ReadOnly = false;
 		}
 
-		public DataTable GetSchemaTable() => _schemaTable;
+		public DataTable GetSchemaTable()
+		{
+			return _schemaTable;
+		}
 
+		/// <summary>
+		/// Removes the specified column
+		/// </summary>
+		/// <param name="columnIndex"></param>
 		public override void RemoveAt(int columnIndex)
 		{
 			base.RemoveAt(columnIndex);
 
 			_schemaTable.Rows.RemoveAt(columnIndex);
+
+			for (int i = columnIndex; i < _schemaTable.Rows.Count; i++)
+			{
+				_schemaTable.Rows[i]["ColumnOrdinal"] = i;
+			}
 		}
 
 		private static IColumnSchema[] GenerateColumnSchemaWrappers(DataTable argSchemaTable)
@@ -106,12 +119,6 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 				{
 					_dataRow["NumericScale"] = value;
 				}
-			}
-
-			public int ColumnOrdinal
-			{
-				get { return (int)_dataRow["ColumnOrdinal"]; }
-				set { _dataRow["ColumnOrdinal"] = value; }
 			}
 
 		}

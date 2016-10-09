@@ -300,6 +300,7 @@ namespace Insight.Database.Providers
 			throw CreateNotRegisteredException(connection, String.Format(CultureInfo.InvariantCulture, "Cannot get the schema for table {0}.", tableName));
 		}
 
+#if !(NETCORE && !COREONDESK)
 		/// <summary>
 		/// Determines if the given column in the schema table is an XML column.
 		/// </summary>
@@ -310,7 +311,18 @@ namespace Insight.Database.Providers
 		{
 			return false;
 		}
-
+#else
+		/// <summary>
+		/// Determines if the given column in the schema table is an XML column.
+		/// </summary>
+		/// <param name="reader">The reader to analyze.</param>
+		/// <param name="index">The index of the column.</param>
+		/// <returns>True if the column is an XML column.</returns>
+		public virtual bool IsXmlColumn(IDataReader reader, int index)
+		{
+			return false;
+		}
+#endif
 		/// <summary>
 		/// Bulk copies a set of objects to the server.
 		/// </summary>
@@ -351,7 +363,7 @@ namespace Insight.Database.Providers
 		{
 			return false;
 		}
-		#endregion
+#endregion
 
 		/// <summary>
 		/// Copies the list of parameters into the given command.
@@ -388,7 +400,7 @@ namespace Insight.Database.Providers
 			return new NotImplementedException(String.Format(CultureInfo.InvariantCulture, "{0}. Have you loaded the provider that supports {1}?", message, databaseObject.GetType().Name));
 		}
 
-		#region Registration
+#region Registration
 		/// <summary>
 		/// Initializes static members of the InsightDbProvider class.
 		/// </summary>
@@ -433,6 +445,6 @@ namespace Insight.Database.Providers
 					providerMap[type] = provider;
 			}
 		}
-		#endregion
+#endregion
 	}
 }

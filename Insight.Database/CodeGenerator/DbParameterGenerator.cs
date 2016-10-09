@@ -83,8 +83,11 @@ namespace Insight.Database.CodeGenerator
 			{ typeof(Guid?), DbType.Guid },
 			{ typeof(DateTime?), DbType.DateTime },
 			{ typeof(DateTimeOffset?), DbType.DateTimeOffset },
-			{ typeof(TimeSpan?), DbType.Time },
-			{ TypeHelper.LinqBinaryType, DbType.Binary },
+			{ typeof(TimeSpan?), DbType.Time }
+
+#if !NETCORE
+			,			{ TypeHelper.LinqBinaryType, DbType.Binary },
+#endif
 		};
 
 		/// <summary>
@@ -128,9 +131,9 @@ namespace Insight.Database.CodeGenerator
 		/// The cache for the deserializers (output parameters).
 		/// </summary>
 		private static ConcurrentDictionary<QueryIdentity, Action<IDbCommand, object>> _deserializers = new ConcurrentDictionary<QueryIdentity, Action<IDbCommand, object>>();
-		#endregion
+#endregion
 
-		#region Code Cache Members
+#region Code Cache Members
 		/// <summary>
 		/// Get the parameter generator method for a command and the type used for the parameter.
 		/// </summary>
@@ -168,9 +171,9 @@ namespace Insight.Database.CodeGenerator
 			// try to get the deserializer. if not found, create one.
 			return _deserializers.GetOrAdd(identity, key => CreateClassOutputParameterConverter(command, type));
 		}
-		#endregion
+#endregion
 
-		#region Input Parameter Code Generation Members
+#region Input Parameter Code Generation Members
 		/// <summary>
 		/// Create the Parameter generator method.
 		/// </summary>
@@ -475,9 +478,9 @@ namespace Insight.Database.CodeGenerator
 				}
 			};
 		}
-		#endregion
+#endregion
 
-		#region Output Parameter Code Generation Members
+#region Output Parameter Code Generation Members
 		/// <summary>
 		/// Creates a converter from output parameters to an object of a given type.
 		/// </summary>
@@ -564,9 +567,9 @@ namespace Insight.Database.CodeGenerator
 
 			return (Action<IDbCommand, object>)dm.CreateDelegate(typeof(Action<IDbCommand, object>));
 		}
-		#endregion
+#endregion
 
-		#region DbType Mapping
+#region DbType Mapping
 		/// <summary>
 		/// Look up a DbType from a .Net type.
 		/// </summary>
@@ -615,9 +618,9 @@ namespace Insight.Database.CodeGenerator
 			// let's see if the type can be directly converted to the parameter type
 			return parameterType;
 		}
-		#endregion
+#endregion
 
-		#region ListParameterHelper Class
+#region ListParameterHelper Class
 		/// <summary>
 		/// Helps pack list parameters into a command.
 		/// </summary>
@@ -732,6 +735,6 @@ namespace Insight.Database.CodeGenerator
 				InsightDbProvider.For(command).SetupTableValuedParameter(command, parameter, list, listType);
 			}
 		}
-		#endregion
+#endregion
 	}
 }

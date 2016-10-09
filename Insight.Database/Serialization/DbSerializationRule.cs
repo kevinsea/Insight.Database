@@ -202,6 +202,9 @@ namespace Insight.Database
 #if !NETCORE  // HACK - fix for Core
 			if (InsightDbProvider.For(reader).IsXmlColumn(reader.GetSchemaTable(), column))
 				return XmlObjectSerializer.Serializer;
+#else
+			if (InsightDbProvider.For(reader).IsXmlColumn(reader, column))
+				return XmlObjectSerializer.Serializer;
 #endif
 
 			return EvaluateRules(prop);

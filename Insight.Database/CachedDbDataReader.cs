@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Insight.Database.PlatformCompatibility.DataReader;
 
 namespace Insight.Database
 {
@@ -127,13 +130,17 @@ namespace Insight.Database
 		}
 
 
-#if !NETCORE || COREGAPFILL  // Bypass for core tests on desktop (missing core functions)
+#if !NETCORE || COREONDESK  // Bypass for core tests on desktop (Compiling Core on Desktop)
 		/// <inheritdoc/>
 		public override DataTable GetSchemaTable()
 		{
 			return _inner.GetSchemaTable();
 		}
-
+#else
+		public override ReadOnlyCollection<DbColumn> GetColumnSchema()
+		{
+			return DataReaderHelpers.GetUnderlyingDbColumnSchema(_inner);
+		}
 #endif
 
 		/// <inheritdoc/>

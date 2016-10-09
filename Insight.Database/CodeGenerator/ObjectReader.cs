@@ -61,8 +61,8 @@ namespace Insight.Database.CodeGenerator
 
 			// copy the schema and fix it
 			ColumnSchemaProvider = DataReaderHelpers.GetColumnSchemaProvider(reader);
-			FixupSchemaNumericScale(ColumnSchemaProvider);
-			FixupSchemaRemoveReadOnlyColumns(ColumnSchemaProvider, mappings);
+			FixupSchemaNumericScale();
+			FixupSchemaRemoveReadOnlyColumns(mappings);
 
 			IsAtomicType = TypeHelper.IsAtomicType(type);
 			if (!IsAtomicType)
@@ -256,9 +256,9 @@ namespace Insight.Database.CodeGenerator
 		/// but the TDS parser doesn't like the ones set on money, smallmoney and date
 		/// so we have to override them
 		/// </summary>
-		private void FixupSchemaNumericScale(IColumnSchemaProvider columnSchemaProvider)
+		private void FixupSchemaNumericScale()
 		{
-			foreach (IColumnSchema columnSchema in columnSchemaProvider)
+			foreach (IColumnSchema columnSchema in ColumnSchemaProvider)
 			{
 				var dataTypeName = columnSchema.DataTypeName;
 				if (!string.IsNullOrWhiteSpace(dataTypeName))
@@ -277,8 +277,10 @@ namespace Insight.Database.CodeGenerator
 		/// Fix the schema by removing any readonly columns and adjusting the column ordinal.
 		/// </summary>
 		/// <param name="mappings">A list of field mappings to adjust with the schema.</param>
-		private void FixupSchemaRemoveReadOnlyColumns(IColumnSchemaProvider columnSchemaProvider, List<FieldMapping> mappings)
+		private void FixupSchemaRemoveReadOnlyColumns(List<FieldMapping> mappings)
 		{
+			IColumnSchemaProvider columnSchemaProvider = ColumnSchemaProvider;
+
 			// remove any mappings for readonly columns, except identities, which we may want to insert
 			if (columnSchemaProvider.Any(x => x.IsReadOnly))
 			{
