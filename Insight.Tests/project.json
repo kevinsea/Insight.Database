@@ -18,7 +18,7 @@
 				"Insight.Database": "1.0.0-*",
 				"Insight.Database.Providers.Default": "1.0.0-*",
 				"NUnit": "3.4.1",
-				"dotnet-test-nunit": "3.4.0-beta-2"
+				"dotnet-test-nunit": "3.4.0-beta-3"
 			},
 			"buildOptions": {
 				"define": [ "NETCORE", "ROSLYN", "COREHACK" ]

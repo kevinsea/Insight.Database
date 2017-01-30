@@ -33,7 +33,12 @@
 	"runtimes": { "win": {} },
 	"dependencies": {
 		"Insight.Database": "1.0.0-*"
+	},
+
+	"scripts": {
+		"postcompile": [
+			"dotnet pack --no-build --configuration %compile:Configuration%"
+		]
 	}
-}
-// , "compilationOptions": { "keyFile": "..\\Insight.Database.snk" } //"keyFile": "..\\Insight.Database.snk"
+	// , "compilationOptions": { "keyFile": "..\\Insight.Database.snk" } //"keyFile": "..\\Insight.Database.snk"
 }

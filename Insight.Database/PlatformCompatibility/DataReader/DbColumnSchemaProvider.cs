@@ -40,6 +40,8 @@ namespace Insight.Database.PlatformCompatibility.DataReader
 			// TODO Review.  This honors removed columns but does not respect changes to other attributes
 			// because its a second read only copy of the data.  We should subclass DbColumn and use it to hold the data?
 
+			//return new ReadOnlyCollection<DbColumn>(_columnSchemas.Values.ToList());
+
 			var list = new List<DbColumn>();
 
 			foreach (IColumnSchema item in this)
